@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import { Plus, Search, Heart, Download, MoreHorizontal, Play } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { usePlaybackStore } from '../store/playbackStore';
-import { ProtectedRoute } from '../components/ProtectedRoute';
-import type { Track } from '../types';
+import { Plus, Search, Heart, Play } from 'lucide-react';
+import { ProtectedRoute } from '../../components/ProtectedRoute';
 
 const LibraryContainer = styled.div`
   padding: 24px;
@@ -17,7 +14,7 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
-  
+
   h1 {
     color: #fff;
     font-size: 32px;
@@ -27,7 +24,7 @@ const Header = styled.div`
 const SearchBar = styled.div`
   position: relative;
   width: 300px;
-  
+
   input {
     width: 100%;
     padding: 10px 40px 10px 16px;
@@ -36,17 +33,17 @@ const SearchBar = styled.div`
     border-radius: 20px;
     color: #fff;
     font-size: 14px;
-    
+
     &::placeholder {
       color: #7c7c7c;
     }
-    
+
     &:focus {
       outline: none;
       background: #333;
     }
   }
-  
+
   svg {
     position: absolute;
     right: 12px;
@@ -67,17 +64,17 @@ const Tab = styled.button<{ $active: boolean }>`
   padding: 12px 0;
   background: none;
   border: none;
-  color: ${props => props.$active ? '#fff' : '#b3b3b3'};
+  color: ${props => (props.$active ? '#fff' : '#b3b3b3')};
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   position: relative;
   transition: color 0.2s;
-  
+
   &:hover {
     color: #fff;
   }
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -86,7 +83,7 @@ const Tab = styled.button<{ $active: boolean }>`
     right: 0;
     height: 2px;
     background: #1db954;
-    transform: ${props => props.$active ? 'scaleX(1)' : 'scaleX(0)'};
+    transform: ${props => (props.$active ? 'scaleX(1)' : 'scaleX(0)')};
     transition: transform 0.2s;
   }
 `;
@@ -96,7 +93,7 @@ const SectionHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  
+
   h2 {
     color: #fff;
     font-size: 24px;
@@ -116,7 +113,7 @@ const CreateButton = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background: #1ed760;
     transform: scale(1.02);
@@ -136,12 +133,12 @@ const PlaylistCard = styled.div`
   padding: 16px;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background: #333;
     transform: translateY(-2px);
   }
-  
+
   .playlist-cover {
     width: 100%;
     aspect-ratio: 1;
@@ -155,13 +152,13 @@ const PlaylistCard = styled.div`
     color: #7c7c7c;
     position: relative;
     overflow: hidden;
-    
+
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    
+
     .play-overlay {
       position: absolute;
       inset: 0;
@@ -171,19 +168,19 @@ const PlaylistCard = styled.div`
       justify-content: center;
       opacity: 0;
       transition: opacity 0.2s;
-      
+
       svg {
         width: 48px;
         height: 48px;
         color: #1db954;
       }
     }
-    
+
     &:hover .play-overlay {
       opacity: 1;
     }
   }
-  
+
   .playlist-name {
     color: #fff;
     font-size: 14px;
@@ -193,7 +190,7 @@ const PlaylistCard = styled.div`
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  
+
   .playlist-info {
     color: #b3b3b3;
     font-size: 12px;
@@ -201,8 +198,6 @@ const PlaylistCard = styled.div`
 `;
 
 function UserLibraryContent() {
-  const { user } = useAuth();
-  const { currentTrack, setCurrentTrack, setIsPlaying } = usePlaybackStore();
   const [activeTab, setActiveTab] = useState('playlists');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -224,23 +219,35 @@ function UserLibraryContent() {
             type="text"
             placeholder="Search in your library"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
           />
           <Search size={20} />
         </SearchBar>
       </Header>
 
       <Tabs>
-        <Tab $active={activeTab === 'playlists'} onClick={() => setActiveTab('playlists')}>
+        <Tab
+          $active={activeTab === 'playlists'}
+          onClick={() => setActiveTab('playlists')}
+        >
           Playlists
         </Tab>
-        <Tab $active={activeTab === 'artists'} onClick={() => setActiveTab('artists')}>
+        <Tab
+          $active={activeTab === 'artists'}
+          onClick={() => setActiveTab('artists')}
+        >
           Artists
         </Tab>
-        <Tab $active={activeTab === 'albums'} onClick={() => setActiveTab('albums')}>
+        <Tab
+          $active={activeTab === 'albums'}
+          onClick={() => setActiveTab('albums')}
+        >
           Albums
         </Tab>
-        <Tab $active={activeTab === 'downloads'} onClick={() => setActiveTab('downloads')}>
+        <Tab
+          $active={activeTab === 'downloads'}
+          onClick={() => setActiveTab('downloads')}
+        >
           Downloads
         </Tab>
       </Tabs>
@@ -260,7 +267,10 @@ function UserLibraryContent() {
               {playlist.type === 'system' ? (
                 <Heart size={48} />
               ) : (
-                <img src={`https://picsum.photos/seed/playlist${playlist.id}/180/180`} alt="" />
+                <img
+                  src={`https://picsum.photos/seed/playlist${playlist.id}/180/180`}
+                  alt=""
+                />
               )}
               <div className="play-overlay">
                 <Play size={48} />

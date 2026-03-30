@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { Music, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { PublicRoute } from '../components/ProtectedRoute';
+import { useAuth } from '../../contexts/AuthContext';
+import { PublicRoute } from '../../components/ProtectedRoute';
 
 const SignupContainer = styled.div`
   min-height: 100vh;
@@ -30,13 +30,13 @@ const Logo = styled.div`
   gap: 12px;
   margin-bottom: 32px;
   justify-content: center;
-  
+
   svg {
     width: 48px;
     height: 48px;
     color: #1db954;
   }
-  
+
   h1 {
     color: #fff;
     font-size: 28px;
@@ -77,13 +77,13 @@ const Input = styled.input`
   color: #fff;
   font-size: 16px;
   transition: all 0.2s;
-  
+
   &:focus {
     outline: none;
     border-color: #1db954;
     box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2);
   }
-  
+
   &::placeholder {
     color: #7c7c7c;
   }
@@ -96,7 +96,7 @@ const InputIcon = styled.div`
   transform: translateY(-50%);
   color: #7c7c7c;
   cursor: pointer;
-  
+
   &:hover {
     color: #fff;
   }
@@ -112,12 +112,12 @@ const Button = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background: #1ed760;
     transform: scale(1.02);
   }
-  
+
   &:disabled {
     background: #535353;
     cursor: not-allowed;
@@ -139,11 +139,11 @@ const LoginLink = styled.p`
   color: #b3b3b3;
   text-align: center;
   margin-top: 24px;
-  
+
   a {
     color: #1db954;
     text-decoration: none;
-    
+
     &:hover {
       text-decoration: underline;
     }
@@ -163,17 +163,17 @@ function SignupForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
-    
+
     if (password !== confirmPassword) {
       alert('Passwords do not match');
       return;
     }
-    
+
     if (password.length < 6) {
       alert('Password must be at least 6 characters long');
       return;
     }
-    
+
     const success = await signup({ email, username, password });
     if (success) {
       navigate('/');
@@ -187,43 +187,70 @@ function SignupForm() {
           <Music />
           <h1>Musify</h1>
         </Logo>
-        
+
         <Title>Create Account</Title>
         <Subtitle>Join Musify to enjoy your favorite music</Subtitle>
-        
+
         <Form onSubmit={handleSubmit}>
           <InputGroup>
-            <Mail style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#7c7c7c' }} size={18} />
+            <Mail
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#7c7c7c',
+              }}
+              size={18}
+            />
             <Input
               type="email"
               placeholder="Email address"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               style={{ paddingLeft: '40px' }}
             />
           </InputGroup>
-          
+
           <InputGroup>
-            <User style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#7c7c7c' }} size={18} />
+            <User
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#7c7c7c',
+              }}
+              size={18}
+            />
             <Input
               type="text"
               placeholder="Username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={e => setUsername(e.target.value)}
               required
               minLength={3}
               style={{ paddingLeft: '40px' }}
             />
           </InputGroup>
-          
+
           <InputGroup>
-            <Lock style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#7c7c7c' }} size={18} />
+            <Lock
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#7c7c7c',
+              }}
+              size={18}
+            />
             <Input
               type={showPassword ? 'text' : 'password'}
               placeholder="Password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               minLength={6}
               style={{ paddingLeft: '40px' }}
@@ -232,29 +259,40 @@ function SignupForm() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </InputIcon>
           </InputGroup>
-          
+
           <InputGroup>
-            <Lock style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#7c7c7c' }} size={18} />
+            <Lock
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#7c7c7c',
+              }}
+              size={18}
+            />
             <Input
               type={showConfirmPassword ? 'text' : 'password'}
               placeholder="Confirm password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={e => setConfirmPassword(e.target.value)}
               required
               style={{ paddingLeft: '40px' }}
             />
-            <InputIcon onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+            <InputIcon
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
               {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </InputIcon>
           </InputGroup>
-          
+
           {error && <ErrorMessage>{error}</ErrorMessage>}
-          
+
           <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Creating account...' : 'Sign Up'}
           </Button>
         </Form>
-        
+
         <LoginLink>
           Already have an account? <Link to="/login">Sign in</Link>
         </LoginLink>

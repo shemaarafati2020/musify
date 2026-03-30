@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import styled from 'styled-components';
 import { Music, X, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,7 +9,7 @@ const Overlay = styled.div<{ $isOpen: boolean }>`
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.8);
-  display: ${props => props.$isOpen ? 'flex' : 'none'};
+  display: ${props => (props.$isOpen ? 'flex' : 'none')};
   align-items: center;
   justify-content: center;
   z-index: 1000;
@@ -38,7 +37,7 @@ const CloseButton = styled.button`
   padding: 4px;
   border-radius: 4px;
   transition: all 0.2s;
-  
+
   &:hover {
     color: #fff;
     background: rgba(255, 255, 255, 0.1);
@@ -50,7 +49,7 @@ const Header = styled.div`
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
-  
+
   svg {
     width: 32px;
     height: 32px;
@@ -93,7 +92,7 @@ const FeatureIcon = styled.div`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  
+
   svg {
     width: 14px;
     height: 14px;
@@ -119,15 +118,18 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   align-items: center;
   justify-content: center;
   gap: 8px;
-  
-  ${props => props.$variant === 'primary' ? `
+
+  ${props =>
+    props.$variant === 'primary'
+      ? `
     background: #1db954;
     color: #fff;
     
     &:hover {
       background: #1ed760;
     }
-  ` : `
+  `
+      : `
     background: transparent;
     color: #fff;
     border: 1px solid #404040;
@@ -148,9 +150,9 @@ export function GuestAccess({ isOpen, onClose }: GuestAccessProps) {
 
   const handleContinueAsGuest = () => {
     // Create a guest user session
-    login({ 
-      email: 'guest@musify.com', 
-      password: 'guest' 
+    login({
+      email: 'guest@musify.com',
+      password: 'guest',
     }).then(() => {
       onClose();
     });
@@ -164,20 +166,21 @@ export function GuestAccess({ isOpen, onClose }: GuestAccessProps) {
 
   return (
     <Overlay $isOpen={isOpen} onClick={onClose}>
-      <Modal onClick={(e) => e.stopPropagation()}>
+      <Modal onClick={e => e.stopPropagation()}>
         <CloseButton onClick={onClose}>
           <X size={20} />
         </CloseButton>
-        
+
         <Header>
           <Music />
           <Title>Welcome to Musify</Title>
         </Header>
-        
+
         <Description>
-          Choose how you'd like to experience Musify. Sign up for the full experience or continue as a guest with limited access.
+          Choose how you'd like to experience Musify. Sign up for the full
+          experience or continue as a guest with limited access.
         </Description>
-        
+
         <Features>
           <Feature>
             <FeatureIcon>
@@ -198,11 +201,9 @@ export function GuestAccess({ isOpen, onClose }: GuestAccessProps) {
             <span>30-second previews of all tracks</span>
           </Feature>
         </Features>
-        
+
         <Actions>
-          <Button onClick={handleContinueAsGuest}>
-            Continue as Guest
-          </Button>
+          <Button onClick={handleContinueAsGuest}>Continue as Guest</Button>
           <Button $variant="secondary" onClick={handleSignUp}>
             Sign Up Free
           </Button>

@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Search, Plus, X, Check } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { usePlaybackStore } from '../store/playbackStore';
-import { ProtectedRoute } from '../components/ProtectedRoute';
-import type { Track } from '../types';
+import { Search, Plus, Check } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { ProtectedRoute } from '../../components/ProtectedRoute';
+import type { Track } from '../../types';
 
 const Container = styled.div`
   padding: 24px;
@@ -15,13 +14,13 @@ const Container = styled.div`
 
 const Header = styled.div`
   margin-bottom: 32px;
-  
+
   h1 {
     color: #fff;
     font-size: 32px;
     margin-bottom: 8px;
   }
-  
+
   p {
     color: #b3b3b3;
     font-size: 16px;
@@ -32,7 +31,7 @@ const Form = styled.div`
   display: grid;
   grid-template-columns: 1fr 2fr;
   gap: 32px;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
@@ -42,10 +41,10 @@ const PlaylistInfo = styled.div`
   background: #282828;
   padding: 24px;
   border-radius: 8px;
-  
+
   .form-group {
     margin-bottom: 20px;
-    
+
     label {
       display: block;
       color: #fff;
@@ -53,8 +52,9 @@ const PlaylistInfo = styled.div`
       font-weight: 600;
       margin-bottom: 8px;
     }
-    
-    input, textarea {
+
+    input,
+    textarea {
       width: 100%;
       padding: 12px;
       background: #404040;
@@ -62,23 +62,23 @@ const PlaylistInfo = styled.div`
       border-radius: 4px;
       color: #fff;
       font-size: 14px;
-      
+
       &:focus {
         outline: none;
         border-color: #1db954;
       }
-      
+
       &::placeholder {
         color: #7c7c7c;
       }
     }
-    
+
     textarea {
       resize: vertical;
       min-height: 100px;
     }
   }
-  
+
   .cover-upload {
     width: 100%;
     aspect-ratio: 1;
@@ -91,19 +91,19 @@ const PlaylistInfo = styled.div`
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
-    
+
     &:hover {
       border-color: #1db954;
       background: #333;
     }
-    
+
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       border-radius: 6px;
     }
-    
+
     &.has-image {
       border: none;
     }
@@ -114,11 +114,11 @@ const TrackSelection = styled.div`
   background: #282828;
   padding: 24px;
   border-radius: 8px;
-  
+
   .search-bar {
     position: relative;
     margin-bottom: 20px;
-    
+
     input {
       width: 100%;
       padding: 12px 40px 12px 16px;
@@ -127,17 +127,17 @@ const TrackSelection = styled.div`
       border-radius: 20px;
       color: #fff;
       font-size: 14px;
-      
+
       &:focus {
         outline: none;
         border-color: #1db954;
       }
-      
+
       &::placeholder {
         color: #7c7c7c;
       }
     }
-    
+
     svg {
       position: absolute;
       right: 12px;
@@ -151,7 +151,7 @@ const TrackSelection = styled.div`
 const TrackList = styled.div`
   max-height: 400px;
   overflow-y: auto;
-  
+
   .track-item {
     display: flex;
     align-items: center;
@@ -159,15 +159,15 @@ const TrackList = styled.div`
     border-radius: 4px;
     cursor: pointer;
     transition: background 0.2s;
-    
+
     &:hover {
       background: rgba(255, 255, 255, 0.05);
     }
-    
+
     &.selected {
       background: rgba(29, 185, 84, 0.1);
     }
-    
+
     .track-checkbox {
       width: 20px;
       height: 20px;
@@ -178,35 +178,35 @@ const TrackList = styled.div`
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
-      
+
       &.checked {
         background: #1db954;
         border-color: #1db954;
       }
     }
-    
+
     .track-cover {
       width: 40px;
       height: 40px;
       border-radius: 4px;
       margin-right: 12px;
     }
-    
+
     .track-info {
       flex: 1;
-      
+
       .track-name {
         color: #fff;
         font-size: 14px;
         margin-bottom: 2px;
       }
-      
+
       .track-artist {
         color: #b3b3b3;
         font-size: 12px;
       }
     }
-    
+
     .track-duration {
       color: #b3b3b3;
       font-size: 12px;
@@ -218,7 +218,7 @@ const Actions = styled.div`
   display: flex;
   justify-content: space-between;
   margin-top: 32px;
-  
+
   .button-group {
     display: flex;
     gap: 12px;
@@ -233,8 +233,10 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  
-  ${props => props.$variant === 'primary' ? `
+
+  ${props =>
+    props.$variant === 'primary'
+      ? `
     background: #1db954;
     color: #fff;
     
@@ -246,7 +248,8 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
       background: #535353;
       cursor: not-allowed;
     }
-  ` : `
+  `
+      : `
     background: transparent;
     color: #fff;
     border: 1px solid #7c7c7c;
@@ -315,13 +318,14 @@ function CreatePlaylistContent() {
     },
   ];
 
-  const filteredTracks = mockTracks.filter(track =>
-    track.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    track.artist.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTracks = mockTracks.filter(
+    track =>
+      track.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      track.artist.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleTrackToggle = (trackId: string) => {
-    setSelectedTracks(prev => 
+    setSelectedTracks(prev =>
       prev.includes(trackId)
         ? prev.filter(id => id !== trackId)
         : [...prev, trackId]
@@ -333,12 +337,12 @@ function CreatePlaylistContent() {
       alert('Please enter a playlist name');
       return;
     }
-    
+
     if (selectedTracks.length === 0) {
       alert('Please select at least one track');
       return;
     }
-    
+
     // Here you would normally save the playlist to your backend
     console.log('Creating playlist:', {
       name: playlistName,
@@ -347,7 +351,7 @@ function CreatePlaylistContent() {
       coverImage,
       createdBy: user?.id,
     });
-    
+
     // Navigate back to library
     navigate('/library');
   };
@@ -378,7 +382,7 @@ function CreatePlaylistContent() {
               type="text"
               placeholder="My Awesome Playlist"
               value={playlistName}
-              onChange={(e) => setPlaylistName(e.target.value)}
+              onChange={e => setPlaylistName(e.target.value)}
               maxLength={100}
             />
           </div>
@@ -388,14 +392,14 @@ function CreatePlaylistContent() {
             <textarea
               placeholder="Tell everyone what your playlist is about..."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               maxLength={300}
             />
           </div>
 
           <div className="form-group">
             <label>Cover Image (optional)</label>
-            <div 
+            <div
               className={`cover-upload ${coverImage ? 'has-image' : ''}`}
               onClick={() => document.getElementById('cover-upload')?.click()}
             >
@@ -426,7 +430,7 @@ function CreatePlaylistContent() {
               type="text"
               placeholder="Search for songs or artists"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
             />
             <Search size={20} />
           </div>
@@ -438,7 +442,9 @@ function CreatePlaylistContent() {
                 className={`track-item ${selectedTracks.includes(track.id) ? 'selected' : ''}`}
                 onClick={() => handleTrackToggle(track.id)}
               >
-                <div className={`track-checkbox ${selectedTracks.includes(track.id) ? 'checked' : ''}`}>
+                <div
+                  className={`track-checkbox ${selectedTracks.includes(track.id) ? 'checked' : ''}`}
+                >
                   {selectedTracks.includes(track.id) && <Check size={14} />}
                 </div>
                 <img src={track.imageUrl} alt="" className="track-cover" />
@@ -447,14 +453,16 @@ function CreatePlaylistContent() {
                   <div className="track-artist">{track.artist}</div>
                 </div>
                 <div className="track-duration">
-                  {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
+                  {Math.floor(track.duration / 60)}:
+                  {(track.duration % 60).toString().padStart(2, '0')}
                 </div>
               </div>
             ))}
           </TrackList>
 
           <SelectedCount>
-            {selectedTracks.length} track{selectedTracks.length !== 1 ? 's' : ''} selected
+            {selectedTracks.length} track
+            {selectedTracks.length !== 1 ? 's' : ''} selected
           </SelectedCount>
         </TrackSelection>
       </Form>

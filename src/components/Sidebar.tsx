@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Music,
   LogOut,
-  User,
   Settings,
   Crown,
   UserPlus,
@@ -206,8 +205,10 @@ const UserProfile = styled.div<{ $collapsed: boolean }>`
   border-radius: 8px;
   margin-top: auto;
   transition: all 0.3s ease;
-  
-  ${props => props.$collapsed && `
+
+  ${props =>
+    props.$collapsed &&
+    `
     justify-content: center;
     padding: 8px;
   `}
@@ -233,7 +234,7 @@ const Username = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  
+
   svg {
     color: #1db954;
   }
@@ -258,7 +259,7 @@ const ActionButton = styled.button`
   padding: 6px;
   border-radius: 4px;
   transition: all 0.2s;
-  
+
   &:hover {
     color: #fff;
     background: rgba(255, 255, 255, 0.1);
@@ -276,7 +277,7 @@ const LoginButton = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     border-color: #fff;
     transform: scale(1.02);
@@ -285,7 +286,7 @@ const LoginButton = styled.button`
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const { user, logout, isAdmin, isUser, isGuest } = useAuth();
+  const { user, logout, isAdmin, isUser } = useAuth();
   const navigate = useNavigate();
 
   const toggleCollapse = () => {
