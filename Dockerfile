@@ -13,7 +13,11 @@ RUN npm ci --only=production && npm cache clean --force
 # Build the application
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+# Copy package files and install ALL dependencies (including devDependencies for build)
+COPY package.json package-lock.json* ./
+RUN npm ci && npm cache clean --force
+
 COPY . .
 
 # Build the application
