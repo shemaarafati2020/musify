@@ -18,14 +18,13 @@ const fadeIn = keyframes`
 `;
 
 const Container = styled.div`
-  flex: 1;
-  overflow-y: auto;
+  min-height: 100%;
   background: linear-gradient(to bottom, #1a1a2e 0%, #121212 300px);
   animation: ${fadeIn} 0.4s ease;
 `;
 
 const ProfileBanner = styled.div`
-  padding: 48px 32px 32px;
+  padding: 88px 32px 32px;
   display: flex;
   align-items: flex-end;
   gap: 28px;

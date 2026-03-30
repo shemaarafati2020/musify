@@ -5,10 +5,9 @@ import { usePlaybackStore } from '../store/playbackStore';
 import type { Track, Album, Artist } from '../types';
 
 const SearchContainer = styled.div`
-  flex: 1;
-  overflow-y: auto;
+  min-height: 100%;
   background: #121212;
-  padding: 24px;
+  padding: 88px 24px 24px 24px;
 `;
 
 const SearchHeader = styled.div`

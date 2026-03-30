@@ -5,10 +5,9 @@ import { usePlaybackStore } from '../store/playbackStore';
 import type { Track } from '../types';
 
 const HomeContainer = styled.div`
-  flex: 1;
-  overflow-y: auto;
+  min-height: 100%;
   background: linear-gradient(to bottom, #1f1f1f, #121212);
-  padding: 24px;
+  padding: 88px 24px 24px 24px;
 `;
 
 const Section = styled.section`

@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
 import PlaybackBar from './components/PlaybackBar';
+import Topbar from './components/Topbar';
 import Home from './pages/Home';
 import Search from './pages/Search';
 import Library from './pages/Library';
@@ -11,9 +12,11 @@ import Login from './pages/guest/Login';
 import Signup from './pages/guest/Signup';
 import Unauthorized from './pages/guest/Unauthorized';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminMusic from './pages/admin/AdminMusic';
 import UserLibrary from './pages/user/UserLibrary';
 import CreatePlaylist from './pages/user/CreatePlaylist';
 import Settings from './pages/user/Settings';
+import Profile from './pages/user/Profile';
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -81,7 +84,9 @@ const MainContent = styled.div`
 const Content = styled.main`
   flex: 1;
   display: flex;
-  overflow: hidden;
+  flex-direction: column;
+  overflow: auto;
+  position: relative;
 `;
 
 function AppContent() {
@@ -90,13 +95,16 @@ function AppContent() {
       <Sidebar />
       <MainContent>
         <Content>
+          <Topbar />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/search" element={<Search />} />
             <Route path="/library" element={<Library />} />
             <Route path="/user-library" element={<UserLibrary />} />
             <Route path="/create-playlist" element={<CreatePlaylist />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/music" element={<AdminMusic />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </Content>
