@@ -20,11 +20,10 @@ const fadeIn = keyframes`
 `;
 
 const Container = styled.div`
-  padding: 32px;
+  padding: 88px 32px 32px;
   max-width: 1400px;
   animation: ${fadeIn} 0.4s ease;
-  overflow-y: auto;
-  height: 100%;
+  min-height: 100%;
 `;
 
 const Header = styled.div`

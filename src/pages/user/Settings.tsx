@@ -4,9 +4,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 
 const Container = styled.div`
-  padding: 24px;
+  padding: 88px 24px 24px;
   max-width: 800px;
   margin: 0 auto;
+  min-height: 100%;
 `;
 
 const Title = styled.h1`
