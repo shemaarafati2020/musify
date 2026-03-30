@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, AuthState, LoginCredentials, SignupCredentials, MockUser } from '../types/auth';
+import type {
+  User,
+  AuthState,
+  LoginCredentials,
+  SignupCredentials,
+  MockUser,
+} from '../types/auth';
 
 // Mock database of users
 const MOCK_USERS: MockUser[] = [
@@ -73,16 +79,19 @@ export const useAuthStore = create<AuthStore>()(
 
       login: async (credentials: LoginCredentials) => {
         set({ isLoading: true, error: null });
-        
+
         try {
           // Simulate API call delay
           await new Promise(resolve => setTimeout(resolve, 1000));
-          
+
           const mockUser = MOCK_USERS.find(
-            u => u.email === credentials.email && u.password === credentials.password
+            u =>
+              u.email === credentials.email &&
+              u.password === credentials.password
           );
-          
+
           if (mockUser) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { password, ...userWithoutPassword } = mockUser;
             set({
               user: {
@@ -100,7 +109,7 @@ export const useAuthStore = create<AuthStore>()(
             });
             return false;
           }
-        } catch (error) {
+        } catch {
           set({
             error: 'Login failed. Please try again.',
             isLoading: false,
@@ -111,13 +120,15 @@ export const useAuthStore = create<AuthStore>()(
 
       signup: async (credentials: SignupCredentials) => {
         set({ isLoading: true, error: null });
-        
+
         try {
           // Simulate API call delay
           await new Promise(resolve => setTimeout(resolve, 1000));
-          
+
           // Check if user already exists
-          const existingUser = MOCK_USERS.find(u => u.email === credentials.email);
+          const existingUser = MOCK_USERS.find(
+            u => u.email === credentials.email
+          );
           if (existingUser) {
             set({
               error: 'User with this email already exists',
@@ -125,7 +136,7 @@ export const useAuthStore = create<AuthStore>()(
             });
             return false;
           }
-          
+
           // Create new user
           const newUser: MockUser = {
             id: `user-${Date.now()}`,
@@ -143,19 +154,20 @@ export const useAuthStore = create<AuthStore>()(
               volume: 0.5,
             },
           };
-          
+
           // In a real app, this would be saved to a database
           MOCK_USERS.push(newUser);
-          
+
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { password, ...userWithoutPassword } = newUser;
           set({
             user: userWithoutPassword,
             isAuthenticated: true,
             isLoading: false,
           });
-          
+
           return true;
-        } catch (error) {
+        } catch {
           set({
             error: 'Signup failed. Please try again.',
             isLoading: false,
@@ -172,7 +184,7 @@ export const useAuthStore = create<AuthStore>()(
         });
       },
 
-      updateUserPreferences: (preferences) => {
+      updateUserPreferences: preferences => {
         const { user } = get();
         if (user) {
           set({
@@ -193,7 +205,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'musify-auth',
-      partialize: (state) => ({
+      partialize: state => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),

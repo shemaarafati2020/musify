@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Lock, Home } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -30,7 +30,7 @@ const Icon = styled.div`
   background: rgba(244, 67, 54, 0.1);
   border-radius: 50%;
   margin-bottom: 24px;
-  
+
   svg {
     width: 40px;
     height: 40px;
@@ -63,7 +63,7 @@ const Button = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background: #1ed760;
     transform: scale(1.02);
@@ -109,18 +109,18 @@ export default function Unauthorized() {
         <Icon>
           <Lock />
         </Icon>
-        
+
         <Title>Access Denied</Title>
         <Message>
           Sorry, you don't have permission to access this page.
           {user && ` Your current role is: ${user.role}`}
         </Message>
-        
+
         <Button onClick={handleGoHome}>
           <Home size={18} />
           Go Home
         </Button>
-        
+
         {user && (
           <RoleInfo>
             <RoleTitle>Role Permissions:</RoleTitle>
@@ -152,13 +152,13 @@ export default function Unauthorized() {
                 </>
               )}
             </RoleDescription>
-            
-            <Button 
-              onClick={handleLogout} 
-              style={{ 
-                marginTop: '16px', 
+
+            <Button
+              onClick={handleLogout}
+              style={{
+                marginTop: '16px',
                 background: '#f44336',
-                width: '100%'
+                width: '100%',
               }}
             >
               Sign Out

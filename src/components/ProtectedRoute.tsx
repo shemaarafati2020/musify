@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserRole } from '../types/auth';
@@ -9,23 +9,25 @@ interface ProtectedRouteProps {
   fallback?: ReactNode;
 }
 
-export function ProtectedRoute({ 
-  children, 
-  requiredRole, 
-  fallback 
+export function ProtectedRoute({
+  children,
+  requiredRole,
+  fallback,
 }: ProtectedRouteProps) {
   const { isAuthenticated, hasRole, isLoading } = useAuth();
 
   if (isLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        background: '#121212',
-        color: '#fff'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          background: '#121212',
+          color: '#fff',
+        }}
+      >
         <div>Loading...</div>
       </div>
     );

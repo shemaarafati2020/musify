@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { Music, Eye, EyeOff, Mail, Lock } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { PublicRoute } from '../components/ProtectedRoute';
+import { useAuth } from '../../contexts/AuthContext';
+import { PublicRoute } from '../../components/ProtectedRoute';
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -30,13 +30,13 @@ const Logo = styled.div`
   gap: 12px;
   margin-bottom: 32px;
   justify-content: center;
-  
+
   svg {
     width: 48px;
     height: 48px;
     color: #1db954;
   }
-  
+
   h1 {
     color: #fff;
     font-size: 28px;
@@ -77,13 +77,13 @@ const Input = styled.input`
   color: #fff;
   font-size: 16px;
   transition: all 0.2s;
-  
+
   &:focus {
     outline: none;
     border-color: #1db954;
     box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2);
   }
-  
+
   &::placeholder {
     color: #7c7c7c;
   }
@@ -96,7 +96,7 @@ const InputIcon = styled.div`
   transform: translateY(-50%);
   color: #7c7c7c;
   cursor: pointer;
-  
+
   &:hover {
     color: #fff;
   }
@@ -112,12 +112,12 @@ const Button = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background: #1ed760;
     transform: scale(1.02);
   }
-  
+
   &:disabled {
     background: #535353;
     cursor: not-allowed;
@@ -153,7 +153,7 @@ const DemoInfo = styled.div`
   color: #b3b3b3;
   font-size: 12px;
   line-height: 1.5;
-  
+
   code {
     color: #fff;
     background: #282828;
@@ -166,11 +166,11 @@ const SignupLink = styled.p`
   color: #b3b3b3;
   text-align: center;
   margin-top: 24px;
-  
+
   a {
     color: #1db954;
     text-decoration: none;
-    
+
     &:hover {
       text-decoration: underline;
     }
@@ -187,7 +187,7 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
-    
+
     const success = await login({ email, password });
     if (success) {
       navigate('/');
@@ -201,30 +201,48 @@ function LoginForm() {
           <Music />
           <h1>Musify</h1>
         </Logo>
-        
+
         <Title>Welcome Back</Title>
         <Subtitle>Sign in to your account to continue</Subtitle>
-        
+
         <Form onSubmit={handleSubmit}>
           <InputGroup>
-            <Mail style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#7c7c7c' }} size={18} />
+            <Mail
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#7c7c7c',
+              }}
+              size={18}
+            />
             <Input
               type="email"
               placeholder="Email address"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               style={{ paddingLeft: '40px' }}
             />
           </InputGroup>
-          
+
           <InputGroup>
-            <Lock style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#7c7c7c' }} size={18} />
+            <Lock
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#7c7c7c',
+              }}
+              size={18}
+            />
             <Input
               type={showPassword ? 'text' : 'password'}
               placeholder="Password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               style={{ paddingLeft: '40px' }}
             />
@@ -232,23 +250,27 @@ function LoginForm() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </InputIcon>
           </InputGroup>
-          
+
           {error && <ErrorMessage>{error}</ErrorMessage>}
-          
+
           <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Signing in...' : 'Sign In'}
           </Button>
         </Form>
-        
+
         <DemoCredentials>
           <DemoTitle>Demo Credentials</DemoTitle>
           <DemoInfo>
-            <strong>Admin:</strong> <code>admin@musify.com</code> / <code>admin123</code><br />
-            <strong>User:</strong> <code>user@musify.com</code> / <code>user123</code><br />
+            <strong>Admin:</strong> <code>admin@musify.com</code> /{' '}
+            <code>admin123</code>
+            <br />
+            <strong>User:</strong> <code>user@musify.com</code> /{' '}
+            <code>user123</code>
+            <br />
             <strong>Guest:</strong> No login required (limited access)
           </DemoInfo>
         </DemoCredentials>
-        
+
         <SignupLink>
           Don't have an account? <Link to="/signup">Sign up</Link>
         </SignupLink>

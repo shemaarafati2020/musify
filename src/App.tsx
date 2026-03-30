@@ -7,12 +7,13 @@ import PlaybackBar from './components/PlaybackBar';
 import Home from './pages/Home';
 import Search from './pages/Search';
 import Library from './pages/Library';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Unauthorized from './pages/Unauthorized';
-import AdminDashboard from './pages/AdminDashboard';
-import UserLibrary from './pages/UserLibrary';
-import CreatePlaylist from './pages/CreatePlaylist';
+import Login from './pages/guest/Login';
+import Signup from './pages/guest/Signup';
+import Unauthorized from './pages/guest/Unauthorized';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UserLibrary from './pages/user/UserLibrary';
+import CreatePlaylist from './pages/user/CreatePlaylist';
+import Settings from './pages/user/Settings';
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -96,6 +97,7 @@ function AppContent() {
             <Route path="/user-library" element={<UserLibrary />} />
             <Route path="/create-playlist" element={<CreatePlaylist />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </Content>
       </MainContent>
@@ -113,11 +115,14 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/*" element={
-            <ProtectedRoute>
-              <AppContent />
-            </ProtectedRoute>
-          } />
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <AppContent />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Router>
     </AuthProvider>

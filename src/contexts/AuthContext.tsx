@@ -1,14 +1,19 @@
-import { createContext, useContext, ReactNode, useEffect } from 'react';
+import { createContext, useContext } from 'react';
+import type { ReactNode } from 'react';
 import { useAuthStore } from '../store/authStore';
 import type { UserRole } from '../types/auth';
 
+type StoreState = ReturnType<typeof useAuthStore.getState>;
+
 interface AuthContextType {
-  user: useAuthStore['user'];
-  isAuthenticated: useAuthStore['isAuthenticated'];
-  isLoading: useAuthStore['isLoading'];
-  login: useAuthStore['login'];
-  signup: useAuthStore['signup'];
-  logout: useAuthStore['logout'];
+  user: StoreState['user'];
+  isAuthenticated: StoreState['isAuthenticated'];
+  isLoading: StoreState['isLoading'];
+  error: StoreState['error'];
+  login: StoreState['login'];
+  signup: StoreState['signup'];
+  logout: StoreState['logout'];
+  clearError: StoreState['clearError'];
   hasRole: (role: UserRole) => boolean;
   isAdmin: boolean;
   isUser: boolean;
@@ -26,9 +31,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     isAuthenticated,
     isLoading,
+    error,
     login,
     signup,
     logout,
+    clearError,
   } = useAuthStore();
 
   const hasRole = (role: UserRole): boolean => {
@@ -45,9 +52,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user,
         isAuthenticated,
         isLoading,
+        error,
         login,
         signup,
         logout,
+        clearError,
         hasRole,
         isAdmin,
         isUser,
@@ -59,6 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
