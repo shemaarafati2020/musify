@@ -128,7 +128,7 @@ jobs:
       with:
         args: --severity-threshold=high
       continue-on-error: true
-      if: secrets.SNYK_TOKEN != ''
+      if: ${{ secrets.SNYK_TOKEN != '' }}
 
   docker-build:
     name: Build and Push Docker Image
