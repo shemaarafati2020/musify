@@ -165,14 +165,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Create release branch
-      if: github.event_name == 'push'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git checkout -b release/${{ github.sha }}
-        git push origin release/${{ github.sha }}
-      
     - name: Deploy to Kubernetes
       run: |
         echo "Deploying to production environment"
