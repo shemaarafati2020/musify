@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home,
   Search,
@@ -9,8 +9,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Music,
+  LogOut,
+  User,
+  Settings,
+  Crown,
+  UserPlus,
 } from 'lucide-react';
 import styled from 'styled-components';
+import { useAuth } from '../contexts/AuthContext';
 
 const SidebarContainer = styled.div<{ $collapsed: boolean }>`
   width: ${props => (props.$collapsed ? '80px' : '240px')};
@@ -191,11 +197,104 @@ const LibrarySection = styled.div<{ $collapsed: boolean }>`
   }
 `;
 
+const UserProfile = styled.div<{ $collapsed: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: #181818;
+  border-radius: 8px;
+  margin-top: auto;
+  transition: all 0.3s ease;
+  
+  ${props => props.$collapsed && `
+    justify-content: center;
+    padding: 8px;
+  `}
+`;
+
+const UserAvatar = styled.img`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+const UserInfo = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+`;
+
+const Username = styled.div`
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  svg {
+    color: #1db954;
+  }
+`;
+
+const UserRole = styled.div`
+  color: #b3b3b3;
+  font-size: 12px;
+  text-transform: capitalize;
+`;
+
+const UserActions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const ActionButton = styled.button`
+  background: none;
+  border: none;
+  color: #b3b3b3;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+`;
+
+const LoginButton = styled.button`
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid #7c7c7c;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: #fff;
+    transform: scale(1.02);
+  }
+`;
+
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const { user, logout, isAdmin, isUser, isGuest } = useAuth();
+  const navigate = useNavigate();
 
   const toggleCollapse = () => {
     setCollapsed(!collapsed);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   const mockPlaylists = [
@@ -232,29 +331,43 @@ const Sidebar = () => {
               <span>Search</span>
             </NavigationLink>
           </NavigationItem>
-          <NavigationItem>
-            <NavigationLink to="/library">
-              <Library size={24} />
-              <span>Your Library</span>
-            </NavigationLink>
-          </NavigationItem>
+          {(isUser || isAdmin) && (
+            <NavigationItem>
+              <NavigationLink to="/library">
+                <Library size={24} />
+                <span>Your Library</span>
+              </NavigationLink>
+            </NavigationItem>
+          )}
         </NavigationList>
 
         <Divider />
 
         <NavigationList>
-          <NavigationItem>
-            <NavigationLink to="/create-playlist">
-              <Plus size={24} />
-              <span>Create Playlist</span>
-            </NavigationLink>
-          </NavigationItem>
-          <NavigationItem>
-            <NavigationLink to="/liked-songs">
-              <Heart size={24} />
-              <span>Liked Songs</span>
-            </NavigationLink>
-          </NavigationItem>
+          {(isUser || isAdmin) && (
+            <NavigationItem>
+              <NavigationLink to="/create-playlist">
+                <Plus size={24} />
+                <span>Create Playlist</span>
+              </NavigationLink>
+            </NavigationItem>
+          )}
+          {(isUser || isAdmin) && (
+            <NavigationItem>
+              <NavigationLink to="/liked-songs">
+                <Heart size={24} />
+                <span>Liked Songs</span>
+              </NavigationLink>
+            </NavigationItem>
+          )}
+          {isAdmin && (
+            <NavigationItem>
+              <NavigationLink to="/admin">
+                <Crown size={24} />
+                <span>Admin Panel</span>
+              </NavigationLink>
+            </NavigationItem>
+          )}
         </NavigationList>
       </Navigation>
 
@@ -264,13 +377,13 @@ const Sidebar = () => {
           <PlaylistList>
             <PlaylistItem>Podcasts</PlaylistItem>
             <PlaylistItem>Audiobooks</PlaylistItem>
-            <PlaylistItem>Artists</PlaylistItem>
-            <PlaylistItem>Albums</PlaylistItem>
+            {(isUser || isAdmin) && <PlaylistItem>Artists</PlaylistItem>}
+            {(isUser || isAdmin) && <PlaylistItem>Albums</PlaylistItem>}
           </PlaylistList>
         )}
       </LibrarySection>
 
-      {!collapsed && (
+      {!collapsed && (isUser || isAdmin) && (
         <PlaylistSection>
           <PlaylistHeader $collapsed={collapsed}>
             <h3>Playlists</h3>
@@ -285,6 +398,41 @@ const Sidebar = () => {
           </PlaylistList>
         </PlaylistSection>
       )}
+
+      {/* User Profile Section */}
+      <UserProfile $collapsed={collapsed}>
+        {user ? (
+          <>
+            <UserAvatar src={user.avatar} alt={user.username} />
+            {!collapsed && (
+              <UserInfo>
+                <Username>
+                  {user.username}
+                  {user.role === 'admin' && <Crown size={14} />}
+                  {user.role === 'guest' && <UserPlus size={14} />}
+                </Username>
+                <UserRole>{user.role}</UserRole>
+              </UserInfo>
+            )}
+            {!collapsed && (
+              <UserActions>
+                <ActionButton onClick={() => navigate('/settings')}>
+                  <Settings size={18} />
+                </ActionButton>
+                <ActionButton onClick={handleLogout}>
+                  <LogOut size={18} />
+                </ActionButton>
+              </UserActions>
+            )}
+          </>
+        ) : (
+          !collapsed && (
+            <LoginButton onClick={() => navigate('/login')}>
+              Sign In
+            </LoginButton>
+          )
+        )}
+      </UserProfile>
     </SidebarContainer>
   );
 };
