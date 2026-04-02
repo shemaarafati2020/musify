@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { X, Keyboard } from 'lucide-react';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useKeyboardShortcuts() {
   const {
     isPlaying,
@@ -27,89 +28,145 @@ export function useKeyboardShortcuts() {
   const navigate = useNavigate();
 
   // Playback controls
-  useHotkeys('space', (e) => {
-    e.preventDefault();
-    setIsPlaying(!isPlaying);
-  }, [isPlaying, setIsPlaying]);
+  useHotkeys(
+    'space',
+    e => {
+      e.preventDefault();
+      setIsPlaying(!isPlaying);
+    },
+    [isPlaying, setIsPlaying]
+  );
 
-  useHotkeys('k', (e) => {
-    e.preventDefault();
-    setIsPlaying(!isPlaying);
-  }, [isPlaying, setIsPlaying]);
+  useHotkeys(
+    'k',
+    e => {
+      e.preventDefault();
+      setIsPlaying(!isPlaying);
+    },
+    [isPlaying, setIsPlaying]
+  );
 
   // Next track
-  useHotkeys('right', (e) => {
-    e.preventDefault();
-    playNext();
-  }, [playNext]);
-
-  // Previous track
-  useHotkeys('left', (e) => {
-    e.preventDefault();
-    playPrevious();
-  }, [playPrevious]);
-
-  // Track navigation
-  useHotkeys('arrowright', (e) => {
-    if (!e.ctrlKey && !e.metaKey) {
+  useHotkeys(
+    'right',
+    e => {
       e.preventDefault();
       playNext();
-    }
-  }, [playNext]);
+    },
+    [playNext]
+  );
 
-  useHotkeys('arrowleft', (e) => {
-    if (!e.ctrlKey && !e.metaKey) {
+  // Previous track
+  useHotkeys(
+    'left',
+    e => {
       e.preventDefault();
       playPrevious();
-    }
-  }, [playPrevious]);
+    },
+    [playPrevious]
+  );
+
+  // Track navigation
+  useHotkeys(
+    'arrowright',
+    e => {
+      if (!e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        playNext();
+      }
+    },
+    [playNext]
+  );
+
+  useHotkeys(
+    'arrowleft',
+    e => {
+      if (!e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        playPrevious();
+      }
+    },
+    [playPrevious]
+  );
 
   // Seek controls
-  useHotkeys('l', () => {
-    if (duration) {
-      setProgress(Math.min(duration * 0.1 + duration, duration));
-    }
-  }, [setProgress, duration]);
+  useHotkeys(
+    'l',
+    () => {
+      if (duration) {
+        setProgress(Math.min(duration * 0.1 + duration, duration));
+      }
+    },
+    [setProgress, duration]
+  );
 
-  useHotkeys('j', () => {
-    if (duration) {
-      setProgress(Math.max(duration * 0.1 - 10, 0));
-    }
-  }, [setProgress, duration]);
+  useHotkeys(
+    'j',
+    () => {
+      if (duration) {
+        setProgress(Math.max(duration * 0.1 - 10, 0));
+      }
+    },
+    [setProgress, duration]
+  );
 
   // Volume controls
-  useHotkeys('arrowup', (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      setVolume(Math.min(volume + 0.1, 1));
-    }
-  }, [setVolume, volume]);
+  useHotkeys(
+    'arrowup',
+    e => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        setVolume(Math.min(volume + 0.1, 1));
+      }
+    },
+    [setVolume, volume]
+  );
 
-  useHotkeys('arrowdown', (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      setVolume(Math.max(volume - 0.1, 0));
-    }
-  }, [setVolume, volume]);
+  useHotkeys(
+    'arrowdown',
+    e => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        setVolume(Math.max(volume - 0.1, 0));
+      }
+    },
+    [setVolume, volume]
+  );
 
-  useHotkeys('m', () => {
-    setVolume(volume > 0 ? 0 : 0.5);
-  }, [setVolume, volume]);
+  useHotkeys(
+    'm',
+    () => {
+      setVolume(volume > 0 ? 0 : 0.5);
+    },
+    [setVolume, volume]
+  );
 
   // Shuffle and repeat
-  useHotkeys('s', (e) => {
-    if (!e.ctrlKey && !e.metaKey) {
-      e.preventDefault();
-      toggleShuffle();
-    }
-  }, [toggleShuffle]);
+  useHotkeys(
+    's',
+    e => {
+      if (!e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        toggleShuffle();
+      }
+    },
+    [toggleShuffle]
+  );
 
-  useHotkeys('r', () => {
-    const modes: ('off' | 'track' | 'context')[] = ['off', 'track', 'context'];
-    const currentIndex = modes.indexOf(repeat);
-    const nextMode = modes[(currentIndex + 1) % modes.length];
-    setRepeat(nextMode);
-  }, [repeat, setRepeat]);
+  useHotkeys(
+    'r',
+    () => {
+      const modes: ('off' | 'track' | 'context')[] = [
+        'off',
+        'track',
+        'context',
+      ];
+      const currentIndex = modes.indexOf(repeat);
+      const nextMode = modes[(currentIndex + 1) % modes.length];
+      setRepeat(nextMode);
+    },
+    [repeat, setRepeat]
+  );
 
   // Navigation shortcuts
   useHotkeys('g h', () => navigate('/'), [navigate]);
@@ -124,19 +181,27 @@ export function useKeyboardShortcuts() {
   useHotkeys('g a', () => navigate('/admin'), [navigate]);
 
   // Logout
-  useHotkeys('ctrl+shift+q', () => {
-    logout();
-    navigate('/login');
-  }, [logout, navigate]);
+  useHotkeys(
+    'ctrl+shift+q',
+    () => {
+      logout();
+      navigate('/login');
+    },
+    [logout, navigate]
+  );
 
   // Like current track
-  useHotkeys('enter', (e) => {
-    if (!e.ctrlKey && !e.metaKey && currentTrack) {
-      e.preventDefault();
-      // Toggle like functionality would go here
-      console.log('Like track:', currentTrack.name);
-    }
-  }, [currentTrack]);
+  useHotkeys(
+    'enter',
+    e => {
+      if (!e.ctrlKey && !e.metaKey && currentTrack) {
+        e.preventDefault();
+        // Toggle like functionality would go here
+        console.log('Like track:', currentTrack.name);
+      }
+    },
+    [currentTrack]
+  );
 
   // Help modal
   useHotkeys('?', () => {
@@ -234,7 +299,10 @@ interface KeyboardShortcutsHelpProps {
   onClose: () => void;
 }
 
-export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps) {
+export function KeyboardShortcutsHelp({
+  isOpen,
+  onClose,
+}: KeyboardShortcutsHelpProps) {
   const shortcuts = [
     { keys: ['Space', 'K'], description: 'Play / Pause' },
     { keys: ['→'], description: 'Next Track' },
@@ -271,7 +339,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
         <CloseButton onClick={onClose}>
           <X size={20} />
         </CloseButton>
-        
+
         <HelpHeader>
           <Keyboard size={24} color="#1db954" />
           <h2 style={{ margin: 0, color: '#fff' }}>Keyboard Shortcuts</h2>
@@ -282,14 +350,10 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
             <div key={index}>
               <div>
                 {shortcut.keys.map((key, i) => (
-                  <ShortcutKey key={i}>
-                    {key}
-                  </ShortcutKey>
+                  <ShortcutKey key={i}>{key}</ShortcutKey>
                 ))}
               </div>
-              <ShortcutDescription>
-                {shortcut.description}
-              </ShortcutDescription>
+              <ShortcutDescription>{shortcut.description}</ShortcutDescription>
             </div>
           ))}
         </ShortcutGrid>

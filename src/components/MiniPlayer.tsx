@@ -179,14 +179,6 @@ const ExpandedContent = styled.div`
   padding: 40px;
 `;
 
-const ExpandedAlbumArt = styled.img`
-  width: 300px;
-  height: 300px;
-  border-radius: 8px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  margin-bottom: 40px;
-`;
-
 const ExpandedTrackInfo = styled.div`
   text-align: center;
   margin-bottom: 40px;
@@ -262,7 +254,7 @@ export function MiniPlayer({
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!duration) return;
-    
+
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percentage = x / rect.width;
@@ -320,7 +312,7 @@ export function MiniPlayer({
                   max="1"
                   step="0.01"
                   value={volume}
-                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  onChange={e => setVolume(parseFloat(e.target.value))}
                 />
               </VolumeControl>
 
@@ -359,7 +351,9 @@ export function MiniPlayer({
 
                 <ExpandedTrackInfo>
                   <ExpandedTrackTitle>{currentTrack.name}</ExpandedTrackTitle>
-                  <ExpandedTrackArtist>{currentTrack.artist}</ExpandedTrackArtist>
+                  <ExpandedTrackArtist>
+                    {currentTrack.artist}
+                  </ExpandedTrackArtist>
                 </ExpandedTrackInfo>
 
                 <ExpandedControls>

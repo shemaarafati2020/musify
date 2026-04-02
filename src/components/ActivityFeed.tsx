@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   Activity,
   Users,
   Heart,
@@ -9,7 +9,6 @@ import {
   Plus,
   TrendingUp,
   X,
-  Sparkles,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -58,9 +57,10 @@ const LiveDot = styled.div`
   background: #ef4444;
   border-radius: 50%;
   animation: pulse 2s infinite;
-  
+
   @keyframes pulse {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 1;
     }
     50% {
@@ -76,15 +76,15 @@ const FeedContent = styled.div`
   border-radius: 0 0 12px 12px;
   max-height: 400px;
   overflow-y: auto;
-  
+
   &::-webkit-scrollbar {
     width: 4px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 2px;
@@ -200,6 +200,18 @@ const CloseButton = styled.button`
   }
 `;
 
+interface ActivityTrack {
+  id: string;
+  title: string;
+  artist: string;
+  albumArt: string;
+}
+
+interface ActivityPlaylist {
+  id: string;
+  name: string;
+}
+
 interface ActivityEvent {
   id: string;
   type: 'play' | 'like' | 'follow' | 'playlist' | 'trending';
@@ -208,15 +220,10 @@ interface ActivityEvent {
     name: string;
     avatar?: string;
   };
-  track?: {
-    id: string;
-    title: string;
-    artist: string;
-    albumArt: string;
-  };
+  track?: ActivityTrack;
+  playlist?: ActivityPlaylist;
   message?: string;
   timestamp: Date;
-  metadata?: any;
 }
 
 interface ActivityFeedProps {
@@ -280,7 +287,7 @@ const mockActivities: ActivityEvent[] = [
 
 export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
   const [activities, setActivities] = useState<ActivityEvent[]>(mockActivities);
-  const showLiveIndicator = true;
+  // Real-time indicator for live updates
 
   useEffect(() => {
     if (!isOpen) return;
@@ -289,17 +296,22 @@ export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
     const interval = setInterval(() => {
       const newActivity: ActivityEvent = {
         id: Date.now().toString(),
-        type: ['play', 'like', 'playlist', 'trending'][Math.floor(Math.random() * 4)] as any,
+        type: ['play', 'like', 'playlist', 'trending'][
+          Math.floor(Math.random() * 4)
+        ] as 'play' | 'like' | 'playlist' | 'trending',
         user: {
           id: Math.random().toString(),
           name: `User ${Math.floor(Math.random() * 1000)}`,
         },
-        track: Math.random() > 0.5 ? {
-          id: Math.random().toString(),
-          title: `Track ${Math.floor(Math.random() * 100)}`,
-          artist: `Artist ${Math.floor(Math.random() * 50)}`,
-          albumArt: `https://picsum.photos/seed/${Date.now()}/64/64`,
-        } : undefined,
+        track:
+          Math.random() > 0.5
+            ? {
+                id: Math.random().toString(),
+                title: `Track ${Math.floor(Math.random() * 100)}`,
+                artist: `Artist ${Math.floor(Math.random() * 50)}`,
+                albumArt: `https://picsum.photos/seed/${Date.now()}/64/64`,
+              }
+            : undefined,
         message: Math.random() > 0.5 ? 'is listening to this' : undefined,
         timestamp: new Date(),
       };
@@ -346,18 +358,30 @@ export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
 
   const formatActivityText = (activity: ActivityEvent) => {
     const userName = activity.user.name;
-    
+
     switch (activity.type) {
       case 'play':
         return <>{userName} is playing</>;
       case 'like':
         return <>{userName} liked</>;
       case 'follow':
-        return <>{userName} {activity.message}</>;
+        return (
+          <>
+            {userName} {activity.message}
+          </>
+        );
       case 'playlist':
-        return <>{userName} {activity.message}</>;
+        return (
+          <>
+            {userName} {activity.message}
+          </>
+        );
       case 'trending':
-        return <>{activity.track?.title} {activity.message}</>;
+        return (
+          <>
+            {activity.track?.title} {activity.message}
+          </>
+        );
       default:
         return <>{userName} updated</>;
     }
@@ -412,13 +436,14 @@ export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
                   </ActivityIcon>
 
                   <ActivityDetails>
-                    <ActivityText>
-                      {formatActivityText(activity)}
-                    </ActivityText>
-                    
+                    <ActivityText>{formatActivityText(activity)}</ActivityText>
+
                     {activity.track && (
                       <TrackPreview>
-                        <TrackArt src={activity.track.albumArt} alt={activity.track.title} />
+                        <TrackArt
+                          src={activity.track.albumArt}
+                          alt={activity.track.title}
+                        />
                         <TrackInfo>
                           <TrackName>{activity.track.title}</TrackName>
                           <TrackArtist>{activity.track.artist}</TrackArtist>
@@ -427,7 +452,11 @@ export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
                     )}
 
                     <ActivityMeta>
-                      <span>{formatDistanceToNow(activity.timestamp, { addSuffix: true })}</span>
+                      <span>
+                        {formatDistanceToNow(activity.timestamp, {
+                          addSuffix: true,
+                        })}
+                      </span>
                       {activity.type === 'trending' && (
                         <>
                           <Users size={16} />

@@ -48,7 +48,7 @@ const StatusIndicator = styled.div<{ $online: boolean }>`
   display: flex;
   align-items: center;
   gap: 4px;
-  color: ${props => props.$online ? '#1db954' : '#ef4444'};
+  color: ${props => (props.$online ? '#1db954' : '#ef4444')};
   font-size: 12px;
 `;
 
@@ -135,25 +135,28 @@ const DownloadProgress = styled.div`
 
 const ProgressRing = styled.svg<{ $progress: number }>`
   transform: rotate(-90deg);
-  
+
   circle {
     fill: none;
     stroke-width: 3;
   }
-  
+
   .background {
     stroke: var(--border);
   }
-  
+
   .progress {
     stroke: #1db954;
-    stroke-dasharray: ${props => 2 * Math.PI * 18};
-    stroke-dashoffset: ${props => 2 * Math.PI * 18 * (1 - props.$progress / 100)};
+    stroke-dasharray: ${() => 2 * Math.PI * 18};
+    stroke-dashoffset: ${({ $progress }) =>
+      2 * Math.PI * 18 * (1 - $progress / 100)};
     transition: stroke-dashoffset 0.3s ease;
   }
 `;
 
-const DownloadStatus = styled.div<{ $status: 'downloading' | 'completed' | 'error' | 'paused' }>`
+const DownloadStatus = styled.div<{
+  $status: 'downloading' | 'completed' | 'error' | 'paused';
+}>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -162,18 +165,26 @@ const DownloadStatus = styled.div<{ $status: 'downloading' | 'completed' | 'erro
   border-radius: 50%;
   background: ${props => {
     switch (props.$status) {
-      case 'completed': return 'rgba(29, 185, 84, 0.2)';
-      case 'error': return 'rgba(239, 68, 68, 0.2)';
-      case 'paused': return 'rgba(245, 158, 11, 0.2)';
-      default: return 'transparent';
+      case 'completed':
+        return 'rgba(29, 185, 84, 0.2)';
+      case 'error':
+        return 'rgba(239, 68, 68, 0.2)';
+      case 'paused':
+        return 'rgba(245, 158, 11, 0.2)';
+      default:
+        return 'transparent';
     }
   }};
   color: ${props => {
     switch (props.$status) {
-      case 'completed': return '#1db954';
-      case 'error': return '#ef4444';
-      case 'paused': return '#f59e0b';
-      default: return 'var(--text-secondary)';
+      case 'completed':
+        return '#1db954';
+      case 'error':
+        return '#ef4444';
+      case 'paused':
+        return '#f59e0b';
+      default:
+        return 'var(--text-secondary)';
     }
   }};
 `;
@@ -204,13 +215,13 @@ const Toggle = styled.label<{ $checked: boolean }>`
   display: inline-block;
   width: 48px;
   height: 24px;
-  
+
   input {
     opacity: 0;
     width: 0;
     height: 0;
   }
-  
+
   span {
     position: absolute;
     cursor: pointer;
@@ -221,10 +232,10 @@ const Toggle = styled.label<{ $checked: boolean }>`
     background-color: var(--border);
     transition: 0.3s;
     border-radius: 24px;
-    
+
     &:before {
       position: absolute;
-      content: "";
+      content: '';
       height: 18px;
       width: 18px;
       left: 3px;
@@ -234,11 +245,11 @@ const Toggle = styled.label<{ $checked: boolean }>`
       border-radius: 50%;
     }
   }
-  
+
   input:checked + span {
     background-color: #1db954;
   }
-  
+
   input:checked + span:before {
     transform: translateX(24px);
   }
@@ -272,7 +283,7 @@ export function OfflineManager({ isOpen }: DownloadManagerProps) {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     if (bytes === 0) return '0 B';
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
   const handleRemoveDownload = (trackId: string) => {
@@ -334,28 +345,24 @@ export function OfflineManager({ isOpen }: DownloadManagerProps) {
               </p>
             </div>
           ) : (
-            downloads.map((download) => (
+            downloads.map(download => (
               <DownloadItem key={download.trackId}>
                 {download.status === 'downloading' ? (
                   <DownloadProgress>
-                    <ProgressRing $progress={download.progress} width="40" height="40">
-                      <circle
-                        cx="20"
-                        cy="20"
-                        r="18"
-                        className="background"
-                      />
-                      <circle
-                        cx="20"
-                        cy="20"
-                        r="18"
-                        className="progress"
-                      />
+                    <ProgressRing
+                      $progress={download.progress}
+                      width="40"
+                      height="40"
+                    >
+                      <circle cx="20" cy="20" r="18" className="background" />
+                      <circle cx="20" cy="20" r="18" className="progress" />
                     </ProgressRing>
                   </DownloadProgress>
                 ) : (
                   <DownloadStatus $status={download.status}>
-                    {download.status === 'completed' && <CheckCircle size={20} />}
+                    {download.status === 'completed' && (
+                      <CheckCircle size={20} />
+                    )}
                     {download.status === 'error' && <XCircle size={20} />}
                     {download.status === 'paused' && <Pause size={20} />}
                   </DownloadStatus>
@@ -389,8 +396,11 @@ export function OfflineManager({ isOpen }: DownloadManagerProps) {
                 <input
                   type="checkbox"
                   checked={settings.autoDownload}
-                  onChange={(e) =>
-                    setSettings(prev => ({ ...prev, autoDownload: e.target.checked }))
+                  onChange={e =>
+                    setSettings(prev => ({
+                      ...prev,
+                      autoDownload: e.target.checked,
+                    }))
                   }
                 />
                 <span />
@@ -403,8 +413,11 @@ export function OfflineManager({ isOpen }: DownloadManagerProps) {
                 <input
                   type="checkbox"
                   checked={settings.wifiOnly}
-                  onChange={(e) =>
-                    setSettings(prev => ({ ...prev, wifiOnly: e.target.checked }))
+                  onChange={e =>
+                    setSettings(prev => ({
+                      ...prev,
+                      wifiOnly: e.target.checked,
+                    }))
                   }
                 />
                 <span />

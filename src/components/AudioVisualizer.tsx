@@ -11,7 +11,11 @@ const VisualizerContainer = styled.div<{ $height?: number }>`
   justify-content: center;
   gap: 2px;
   padding: 8px;
-  background: linear-gradient(180deg, rgba(29, 185, 84, 0.1) 0%, transparent 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(29, 185, 84, 0.1) 0%,
+    transparent 100%
+  );
   border-radius: 8px;
   overflow: hidden;
 `;
@@ -30,19 +34,23 @@ interface AudioVisualizerProps {
   animated?: boolean;
 }
 
-export function AudioVisualizer({ 
-  barCount = 32, 
-  height = 60, 
+export function AudioVisualizer({
+  barCount = 32,
+  height = 60,
   color,
-  animated = true 
+  animated = true,
 }: AudioVisualizerProps) {
-  const [bars, setBars] = useState<number[]>(new Array(barCount).fill(0));
   const { currentTrack, isPlaying } = usePlaybackStore();
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
   const animationRef = useRef<number | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+
+  // Initialize bars based on props
+  const [bars, setBars] = useState<number[]>(() =>
+    !animated
+      ? new Array(barCount).fill(height * 0.3)
+      : new Array(barCount).fill(0)
+  );
 
   useEffect(() => {
     if (!animated) return;
@@ -50,7 +58,11 @@ export function AudioVisualizer({
     // Initialize audio context and analyser
     const initAudioContext = () => {
       if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioContextRef.current = new (
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext })
+            .webkitAudioContext
+        )();
         analyserRef.current = audioContextRef.current.createAnalyser();
         analyserRef.current.fftSize = 64;
       }
@@ -59,12 +71,12 @@ export function AudioVisualizer({
     // Simulate audio visualization with mock data
     const animate = () => {
       if (isPlaying && currentTrack) {
-        setBars(prev => 
+        setBars(prev =>
           prev.map(() => Math.random() * height * 0.8 + height * 0.1)
         );
       } else {
-        setBars(prev => 
-          prev.map(h => h * 0.9) // Gradual decay when paused
+        setBars(
+          prev => prev.map(h => h * 0.9) // Gradual decay when paused
         );
       }
       animationRef.current = requestAnimationFrame(animate);
@@ -79,13 +91,6 @@ export function AudioVisualizer({
       }
     };
   }, [isPlaying, currentTrack, height, animated]);
-
-  // Static visualization when not animated
-  useEffect(() => {
-    if (!animated) {
-      setBars(new Array(barCount).fill(height * 0.3));
-    }
-  }, [barCount, height, animated]);
 
   return (
     <VisualizerContainer $height={height}>
@@ -138,24 +143,20 @@ interface WaveformVisualizerProps {
   onSeek?: (time: number) => void;
 }
 
-export function WaveformVisualizer({ 
-  duration, 
-  currentTime, 
-  onSeek 
+export function WaveformVisualizer({
+  duration,
+  currentTime,
+  onSeek,
 }: WaveformVisualizerProps) {
-  const [waveformData, setWaveformData] = useState<number[]>([]);
+  // Generate mock waveform data on initialization
+  const [waveformData] = useState<number[]>(() =>
+    new Array(200).fill(0).map(() => Math.random() * 40 + 10)
+  );
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-
-  useEffect(() => {
-    // Generate mock waveform data
-    const points = 200;
-    const data = new Array(points).fill(0).map(() => Math.random() * 40 + 10);
-    setWaveformData(data);
-  }, []);
 
   const handleClick = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!onSeek || !duration) return;
-    
+
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -177,30 +178,22 @@ export function WaveformVisualizer({
 
   return (
     <WaveformContainer>
-      <svg
-        width="100%"
-        height="80"
-        viewBox="0 0 100 80"
-        onClick={handleClick}
-      >
+      <svg width="100%" height="80" viewBox="0 0 100 80" onClick={handleClick}>
         {/* Full waveform */}
         <WaveformPath
           d={pathData}
           $progress={progress}
           initial={{ pathLength: 0 }}
           animate={{ pathLength: 1 }}
-          transition={{ duration: 1, ease: "easeInOut" }}
+          transition={{ duration: 1, ease: 'easeInOut' }}
         />
-        
+
         {/* Progress indicator */}
         <clipPath id="progressClip">
           <rect x="0" y="0" width={progress} height="80" />
         </clipPath>
-        <ProgressPath
-          d={progressPathData}
-          clipPath="url(#progressClip)"
-        />
-        
+        <ProgressPath d={progressPathData} clipPath="url(#progressClip)" />
+
         {/* Current time indicator */}
         <line
           x1={progress}

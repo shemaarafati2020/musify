@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Sliders, 
-  Volume2, 
+import {
+  Sliders,
+  Volume2,
   Zap,
   Waves,
   RotateCw,
-  RotateCcw
+  RotateCcw,
 } from 'lucide-react';
-import { usePlaybackStore } from '../store/playbackStore';
 
 const ControlsContainer = styled.div`
   background: rgba(40, 40, 40, 0.95);
@@ -51,10 +50,11 @@ const TabContainer = styled.div`
 const Tab = styled.button<{ $active: boolean }>`
   background: none;
   border: none;
-  color: ${props => props.$active ? '#1db954' : '#b3b3b3'};
+  color: ${props => (props.$active ? '#1db954' : '#b3b3b3')};
   padding: 8px 16px;
   cursor: pointer;
-  border-bottom: 2px solid ${props => props.$active ? '#1db954' : 'transparent'};
+  border-bottom: 2px solid
+    ${props => (props.$active ? '#1db954' : 'transparent')};
   transition: all 0.2s;
 
   &:hover {
@@ -166,8 +166,13 @@ interface AdvancedAudioControlsProps {
   onClose: () => void;
 }
 
-export function AdvancedAudioControls({ isOpen, onClose }: AdvancedAudioControlsProps) {
-  const [activeTab, setActiveTab] = useState<'equalizer' | 'crossfade'>('equalizer');
+export function AdvancedAudioControls({
+  isOpen,
+  onClose,
+}: AdvancedAudioControlsProps) {
+  const [activeTab, setActiveTab] = useState<'equalizer' | 'crossfade'>(
+    'equalizer'
+  );
   const [equalizerBands, setEqualizerBands] = useState({
     '60': 0,
     '230': 0,
@@ -176,7 +181,6 @@ export function AdvancedAudioControls({ isOpen, onClose }: AdvancedAudioControls
     '14k': 0,
   });
   const [crossfadeDuration, setCrossfadeDuration] = useState(3);
-  const { setVolume, crossfade, setCrossfade } = usePlaybackStore();
 
   const equalizerPresets = {
     Normal: { '60': 0, '230': 0, '910': 0, '4k': 0, '14k': 0 },
@@ -187,15 +191,9 @@ export function AdvancedAudioControls({ isOpen, onClose }: AdvancedAudioControls
   };
 
   useEffect(() => {
-    // Apply equalizer settings to audio context
     // This would integrate with Web Audio API
     console.log('Equalizer bands changed:', equalizerBands);
   }, [equalizerBands]);
-
-  useEffect(() => {
-    // Apply crossfade settings
-    console.log('Crossfade duration changed:', crossfadeDuration);
-  }, [crossfadeDuration]);
 
   const handleEqualizerChange = (frequency: string, value: number) => {
     setEqualizerBands(prev => ({
@@ -270,17 +268,21 @@ export function AdvancedAudioControls({ isOpen, onClose }: AdvancedAudioControls
                     min="-12"
                     max="12"
                     value={value}
-                    onChange={(e) => handleEqualizerChange(frequency, parseInt(e.target.value))}
+                    onChange={e =>
+                      handleEqualizerChange(frequency, parseInt(e.target.value))
+                    }
                   />
                   <ValueLabel>{value > 0 ? `+${value}` : value}</ValueLabel>
                 </FrequencyBand>
               ))}
 
               <PresetButtons>
-                {Object.keys(equalizerPresets).map((preset) => (
+                {Object.keys(equalizerPresets).map(preset => (
                   <PresetButton
                     key={preset}
-                    onClick={() => applyPreset(preset as keyof typeof equalizerPresets)}
+                    onClick={() =>
+                      applyPreset(preset as keyof typeof equalizerPresets)
+                    }
                   >
                     {preset}
                   </PresetButton>
@@ -299,13 +301,18 @@ export function AdvancedAudioControls({ isOpen, onClose }: AdvancedAudioControls
                   max="10"
                   step="0.5"
                   value={crossfadeDuration}
-                  onChange={(e) => setCrossfadeDuration(parseFloat(e.target.value))}
+                  onChange={e =>
+                    setCrossfadeDuration(parseFloat(e.target.value))
+                  }
                 />
                 <CrossfadeValue>{crossfadeDuration}s</CrossfadeValue>
               </CrossfadeSlider>
 
-              <div style={{ color: '#b3b3b3', fontSize: '12px', marginTop: '8px' }}>
-                Automatically crossfade between tracks with a {crossfadeDuration}-second overlap.
+              <div
+                style={{ color: '#b3b3b3', fontSize: '12px', marginTop: '8px' }}
+              >
+                Automatically crossfade between tracks with a{' '}
+                {crossfadeDuration}-second overlap.
               </div>
 
               <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
@@ -343,7 +350,13 @@ export function AdvancedAudioControls({ isOpen, onClose }: AdvancedAudioControls
             </CrossfadeContainer>
           )}
 
-          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #404040' }}>
+          <div
+            style={{
+              marginTop: '20px',
+              paddingTop: '16px',
+              borderTop: '1px solid #404040',
+            }}
+          >
             <button
               onClick={resetAll}
               style={{

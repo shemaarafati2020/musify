@@ -310,10 +310,20 @@ const SearchResultItem = styled.div`
   }
 `;
 
+interface PlaylistTrack {
+  id: string;
+  name: string;
+  artist: string;
+}
+
 interface CollaborativePlaylistProps {
   isOpen: boolean;
   onClose: () => void;
-  playlist: any;
+  playlist: {
+    id: string;
+    name: string;
+    tracks: PlaylistTrack[];
+  };
 }
 
 interface Message {
@@ -332,13 +342,32 @@ interface Collaborator {
   role: 'owner' | 'editor' | 'viewer';
 }
 
-export function CollaborativePlaylist({ isOpen, onClose, playlist }: CollaborativePlaylistProps) {
+export function CollaborativePlaylist({
+  isOpen,
+  onClose,
+  playlist,
+}: CollaborativePlaylistProps) {
   const [collaborators] = useState<Collaborator[]>([
-    { id: '1', name: 'John Doe', avatar: 'https://picsum.photos/seed/user1/64/64', role: 'owner' },
-    { id: '2', name: 'Jane Smith', avatar: 'https://picsum.photos/seed/user2/64/64', role: 'editor' },
-    { id: '3', name: 'Bob Johnson', avatar: 'https://picsum.photos/seed/user3/64/64', role: 'viewer' },
+    {
+      id: '1',
+      name: 'John Doe',
+      avatar: 'https://picsum.photos/seed/user1/64/64',
+      role: 'owner',
+    },
+    {
+      id: '2',
+      name: 'Jane Smith',
+      avatar: 'https://picsum.photos/seed/user2/64/64',
+      role: 'editor',
+    },
+    {
+      id: '3',
+      name: 'Bob Johnson',
+      avatar: 'https://picsum.photos/seed/user3/64/64',
+      role: 'viewer',
+    },
   ]);
-  
+
   const [messages, setMessages] = useState<Message[]>(() => [
     {
       id: '1',
@@ -363,9 +392,9 @@ export function CollaborativePlaylist({ isOpen, onClose, playlist }: Collaborati
   const [isPublic, setIsPublic] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, [messages]);
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
@@ -383,7 +412,7 @@ export function CollaborativePlaylist({ isOpen, onClose, playlist }: Collaborati
     setNewMessage('');
   };
 
-  const handleAddTrack = (track: any) => {
+  const handleAddTrack = (track: PlaylistTrack) => {
     // Add track to playlist logic here
     console.log('Adding track:', track);
     setShowSearch(false);
@@ -417,7 +446,12 @@ export function CollaborativePlaylist({ isOpen, onClose, playlist }: Collaborati
       >
         <Header>
           <HeaderInfo>
-            <PlaylistCover src={playlist.coverImage || 'https://picsum.photos/seed/playlist/160/160'} />
+            <PlaylistCover
+              src={
+                playlist.coverImage ||
+                'https://picsum.photos/seed/playlist/160/160'
+              }
+            />
             <PlaylistDetails>
               <PlaylistTitle>
                 <Users size={20} />
@@ -576,25 +610,41 @@ export function CollaborativePlaylist({ isOpen, onClose, playlist }: Collaborati
                     {mockSearchResults.map(result => (
                       <SearchResultItem
                         key={result.id}
-                        onClick={() => handleAddTrack({
-                          id: result.id,
-                          name: result.title,
-                          artist: result.artist,
-                          album: '',
-                          duration: 0,
-                          imageUrl: result.albumArt,
-                        })}
+                        onClick={() =>
+                          handleAddTrack({
+                            id: result.id,
+                            name: result.title,
+                            artist: result.artist,
+                            album: '',
+                            duration: 0,
+                            imageUrl: result.albumArt,
+                          })
+                        }
                       >
                         <img
                           src={result.albumArt}
                           alt={result.title}
-                          style={{ width: '32px', height: '32px', borderRadius: '4px' }}
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '4px',
+                          }}
                         />
                         <div>
-                          <div style={{ color: 'var(--text-primary)', fontSize: '14px' }}>
+                          <div
+                            style={{
+                              color: 'var(--text-primary)',
+                              fontSize: '14px',
+                            }}
+                          >
                             {result.title}
                           </div>
-                          <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+                          <div
+                            style={{
+                              color: 'var(--text-secondary)',
+                              fontSize: '12px',
+                            }}
+                          >
                             {result.artist}
                           </div>
                         </div>
@@ -605,7 +655,7 @@ export function CollaborativePlaylist({ isOpen, onClose, playlist }: Collaborati
               </AnimatePresence>
             </div>
 
-            {playlist.tracks.map((track: any, index: number) => {
+            {playlist.tracks.map((track: PlaylistTrack, index: number) => {
               const trackId = typeof track === 'string' ? track : track.id;
               return (
                 <TrackItem
