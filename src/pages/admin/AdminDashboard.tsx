@@ -9,7 +9,7 @@ const fadeIn = keyframes`
 `;
 
 const Container = styled.div`
-  padding: 88px 32px 32px;
+  padding: 24px 32px 32px;
   max-width: 1400px;
   min-height: 100%;
   animation: ${fadeIn} 0.4s ease;

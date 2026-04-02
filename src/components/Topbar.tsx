@@ -19,14 +19,14 @@ const TopbarContainer = styled.header<{ $scrolled: boolean }>`
   align-items: center;
   justify-content: space-between;
   background-color: ${props =>
-    props.$scrolled ? 'rgba(18, 18, 18, 0.8)' : 'transparent'};
-  backdrop-filter: ${props => (props.$scrolled ? 'blur(8px)' : 'none')};
-  position: absolute;
+    props.$scrolled ? 'rgba(18, 18, 18, 0.95)' : 'rgba(18, 18, 18, 0.4)'};
+  backdrop-filter: blur(8px);
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 100;
   transition: background-color 0.3s ease;
+  flex-shrink: 0;
+  border-bottom: ${props => props.$scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent'};
 `;
 
 const NavArrows = styled.div`
@@ -227,18 +227,28 @@ const Topbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Find the main scrollable container
       const scrollContainer = document.querySelector('main');
       if (scrollContainer) {
         setScrolled(scrollContainer.scrollTop > 10);
       }
     };
 
-    const container = document.querySelector('main');
-    if (container) {
-      container.addEventListener('scroll', handleScroll);
-      return () => container.removeEventListener('scroll', handleScroll);
-    }
+    // Small delay to allow the new page to mount and scroll to top
+    const timer = setTimeout(() => {
+      const container = document.querySelector('main');
+      if (container) {
+        container.scrollTop = 0;
+        container.addEventListener('scroll', handleScroll);
+      }
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      const container = document.querySelector('main');
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+    };
   }, [location.pathname]);
 
   useEffect(() => {

@@ -7,7 +7,7 @@ import { ProtectedRoute } from '../../components/ProtectedRoute';
 import type { Track } from '../../types';
 
 const Container = styled.div`
-  padding: 88px 24px 24px;
+  padding: 24px 24px 24px;
   max-width: 1200px;
   margin: 0 auto;
   min-height: 100%;

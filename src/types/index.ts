@@ -6,6 +6,7 @@ export interface Track {
   duration: number;
   imageUrl: string;
   previewUrl?: string;
+  audioUrl?: string;
 }
 
 export interface Playlist {
