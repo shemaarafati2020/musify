@@ -4,7 +4,7 @@ import { Plus, Search, Heart, Play } from 'lucide-react';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
 
 const LibraryContainer = styled.div`
-  padding: 88px 24px 24px;
+  padding: 24px 24px 24px;
   max-width: 1400px;
   margin: 0 auto;
   min-height: 100%;

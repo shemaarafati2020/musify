@@ -14,7 +14,7 @@ import type { Playlist } from '../types';
 const LibraryContainer = styled.div`
   min-height: 100%;
   background: #121212;
-  padding: 88px 24px 24px 24px;
+  padding: 24px 24px 24px 24px;
 `;
 
 const LibraryHeader = styled.div`

@@ -24,7 +24,7 @@ const Container = styled.div`
 `;
 
 const ProfileBanner = styled.div`
-  padding: 88px 32px 32px;
+  padding: 24px 32px 32px;
   display: flex;
   align-items: flex-end;
   gap: 28px;

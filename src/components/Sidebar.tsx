@@ -10,6 +10,10 @@ import {
   ChevronRight,
   Music,
   Crown,
+  BarChart3,
+  Users,
+  Activity,
+  Settings,
 } from 'lucide-react';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
@@ -22,6 +26,8 @@ const SidebarContainer = styled.div<{ $collapsed: boolean }>`
   flex-direction: column;
   transition: width 0.3s ease;
   position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
 `;
 
 const CollapseButton = styled.button`
@@ -271,6 +277,34 @@ const Sidebar = () => {
                 <span>Admin Panel</span>
               </NavigationLink>
             </NavigationItem>
+          )}
+          {isAdmin && !collapsed && (
+            <>
+              <NavigationItem>
+                <NavigationLink to="/admin/analytics" style={{ paddingLeft: 28 }}>
+                  <BarChart3 size={20} />
+                  <span>Analytics</span>
+                </NavigationLink>
+              </NavigationItem>
+              <NavigationItem>
+                <NavigationLink to="/admin/users" style={{ paddingLeft: 28 }}>
+                  <Users size={20} />
+                  <span>Users</span>
+                </NavigationLink>
+              </NavigationItem>
+              <NavigationItem>
+                <NavigationLink to="/admin/performance" style={{ paddingLeft: 28 }}>
+                  <Activity size={20} />
+                  <span>Performance</span>
+                </NavigationLink>
+              </NavigationItem>
+              <NavigationItem>
+                <NavigationLink to="/admin/settings" style={{ paddingLeft: 28 }}>
+                  <Settings size={20} />
+                  <span>System Settings</span>
+                </NavigationLink>
+              </NavigationItem>
+            </>
           )}
         </NavigationList>
       </Navigation>

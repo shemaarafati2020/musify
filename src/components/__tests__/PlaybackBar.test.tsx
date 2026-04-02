@@ -10,6 +10,10 @@ const mockUsePlaybackStore = vi.mocked(usePlaybackStore);
 
 describe('PlaybackBar', () => {
   beforeEach(() => {
+    // Mock HTMLMediaElement methods
+    HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined);
+    HTMLMediaElement.prototype.pause = vi.fn();
+
     mockUsePlaybackStore.mockReturnValue({
       currentTrack: {
         id: '1',
