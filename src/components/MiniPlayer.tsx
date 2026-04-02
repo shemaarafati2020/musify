@@ -373,7 +373,7 @@ export function MiniPlayer({
                     <ProgressFill $progress={progress} />
                   </ProgressTrack>
                   <TimeDisplay>
-                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatTime(0)}</span>
                     <span>{formatTime(duration)}</span>
                   </TimeDisplay>
                 </ProgressBar>

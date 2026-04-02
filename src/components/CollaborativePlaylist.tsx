@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -323,6 +323,7 @@ interface CollaborativePlaylistProps {
     id: string;
     name: string;
     tracks: PlaylistTrack[];
+    coverImage?: string;
   };
 }
 
@@ -491,7 +492,7 @@ export function CollaborativePlaylist({
                 borderRadius: '50%',
               }}
             >
-              <Share size={20} />
+              <Users size={20} />
             </button>
             <button
               onClick={onClose}
@@ -571,7 +572,13 @@ export function CollaborativePlaylist({
                     }}
                   />
                   <button
-                    onClick={handleSendMessage}
+                    onClick={() =>
+                      handleAddTrack({
+                        id: '1',
+                        name: 'Summer Breeze',
+                        artist: 'The Beach Boys',
+                      })
+                    }
                     style={{
                       background: 'var(--accent)',
                       border: 'none',
@@ -615,39 +622,14 @@ export function CollaborativePlaylist({
                             id: result.id,
                             name: result.title,
                             artist: result.artist,
-                            album: '',
-                            duration: 0,
-                            imageUrl: result.albumArt,
                           })
                         }
                       >
-                        <img
-                          src={result.albumArt}
-                          alt={result.title}
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '4px',
-                          }}
-                        />
-                        <div>
-                          <div
-                            style={{
-                              color: 'var(--text-primary)',
-                              fontSize: '14px',
-                            }}
-                          >
-                            {result.title}
-                          </div>
-                          <div
-                            style={{
-                              color: 'var(--text-secondary)',
-                              fontSize: '12px',
-                            }}
-                          >
-                            {result.artist}
-                          </div>
-                        </div>
+                        <TrackNumber>1</TrackNumber>
+                        <TrackInfo>
+                          <TrackName>{result.title}</TrackName>
+                          <TrackArtist>{result.artist}</TrackArtist>
+                        </TrackInfo>
                       </SearchResultItem>
                     ))}
                   </SearchResults>
@@ -666,8 +648,8 @@ export function CollaborativePlaylist({
                 >
                   <TrackNumber>{index + 1}</TrackNumber>
                   <TrackInfo>
-                    <TrackName>Sample Track</TrackName>
-                    <TrackArtist>Sample Artist</TrackArtist>
+                    <TrackName>{track.name}</TrackName>
+                    <TrackArtist>{track.artist}</TrackArtist>
                     <AddedBy>
                       <Clock size={10} />
                       Added by John
