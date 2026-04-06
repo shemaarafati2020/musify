@@ -22,6 +22,7 @@ import {
   Sliders,
 } from 'lucide-react';
 import { usePlaybackStore } from '../store/playbackStore';
+import { api } from '../services/api';
 
 /* ─── Animations ─── */
 const slideUp = keyframes`
@@ -705,6 +706,13 @@ const PlaybackBar = ({
   const volumeRef = useRef<HTMLDivElement>(null);
 
   const [liked, setLiked] = useState(false);
+
+  /* ── Record play on track change ── */
+  useEffect(() => {
+    if (currentTrack?.id) {
+      api.post(`/api/tracks/${currentTrack.id}/play`).catch(() => {});
+    }
+  }, [currentTrack?.id]);
   const [muted, setMuted] = useState(false);
   const [prevVol, setPrevVol] = useState(volume);
   const [dragging, setDragging] = useState(false);
@@ -1049,7 +1057,12 @@ const PlaybackBar = ({
               <CtrlBtn
                 $active={liked}
                 $size="sm"
-                onClick={() => setLiked(l => !l)}
+                onClick={() => {
+                  if (currentTrack?.id) {
+                    api.post(`/api/tracks/${currentTrack.id}/like`).catch(() => {});
+                  }
+                  setLiked(l => !l);
+                }}
               >
                 <Heart size={16} fill={liked ? 'currentColor' : 'none'} />
               </CtrlBtn>
