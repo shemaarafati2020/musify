@@ -19,7 +19,7 @@ services:
     networks:
       - musify-network
 
-  # Backend API (placeholder for future implementation)
+  # Backend API
   musify-api:
     image: node:20-alpine
     working_dir: /app
@@ -29,8 +29,11 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://musify:password@postgres:5432/musify
       - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=musify-docker-jwt-secret-2024
+      - JWT_REFRESH_SECRET=musify-docker-refresh-secret-2024
+      - CORS_ORIGIN=http://localhost:3000
     volumes:
-      - ./api:/app
+      - ./backend:/app
       - /app/node_modules
     depends_on:
       - postgres
