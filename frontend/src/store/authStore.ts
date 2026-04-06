@@ -1,65 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { api, ApiError } from '../services/api';
 import type {
   User,
   AuthState,
   LoginCredentials,
   SignupCredentials,
-  MockUser,
+  AuthResponse,
 } from '../types/auth';
-
-// Mock database of users
-const MOCK_USERS: MockUser[] = [
-  {
-    id: 'admin-1',
-    email: 'admin@musify.com',
-    username: 'admin',
-    password: 'admin123',
-    role: 'admin',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
-    createdAt: new Date('2024-01-01'),
-    preferences: {
-      theme: 'dark',
-      language: 'en',
-      explicitContent: true,
-      autoplay: true,
-      volume: 0.8,
-    },
-  },
-  {
-    id: 'user-1',
-    email: 'user@musify.com',
-    username: 'musiclover',
-    password: 'user123',
-    role: 'user',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user',
-    createdAt: new Date('2024-02-15'),
-    lastLogin: new Date(),
-    preferences: {
-      theme: 'dark',
-      language: 'en',
-      explicitContent: false,
-      autoplay: false,
-      volume: 0.6,
-    },
-  },
-  {
-    id: 'guest-1',
-    email: 'guest@musify.com',
-    username: 'guest',
-    password: 'guest',
-    role: 'guest',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest',
-    createdAt: new Date(),
-    preferences: {
-      theme: 'dark',
-      language: 'en',
-      explicitContent: false,
-      autoplay: false,
-      volume: 0.5,
-    },
-  },
-];
 
 interface AuthStore extends AuthState {
   login: (credentials: LoginCredentials) => Promise<boolean>;
@@ -76,44 +24,43 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      accessToken: null,
+      refreshToken: null,
 
       login: async (credentials: LoginCredentials) => {
         set({ isLoading: true, error: null });
 
         try {
-          // Simulate API call delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          const data = await api.post<AuthResponse>('/api/auth/login', credentials);
 
-          const mockUser = MOCK_USERS.find(
-            u =>
-              u.email === credentials.email &&
-              u.password === credentials.password
-          );
+          const user: User = {
+            id: data.user.id,
+            email: data.user.email,
+            username: data.user.username,
+            role: data.user.role,
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.username}`,
+            createdAt: new Date(data.user.createdAt),
+            lastLogin: new Date(),
+            preferences: data.user.preferences || {
+              theme: 'dark',
+              language: 'en',
+              explicitContent: false,
+              autoplay: true,
+              volume: 0.8,
+            },
+          };
 
-          if (mockUser) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { password, ...userWithoutPassword } = mockUser;
-            set({
-              user: {
-                ...userWithoutPassword,
-                lastLogin: new Date(),
-              },
-              isAuthenticated: true,
-              isLoading: false,
-            });
-            return true;
-          } else {
-            set({
-              error: 'Invalid email or password',
-              isLoading: false,
-            });
-            return false;
-          }
-        } catch {
           set({
-            error: 'Login failed. Please try again.',
+            user,
+            isAuthenticated: true,
             isLoading: false,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
           });
+          return true;
+        } catch (err) {
+          const message = err instanceof ApiError ? err.message : 'Login failed. Please try again.';
+          set({ error: message, isLoading: false });
           return false;
         }
       },
@@ -122,31 +69,16 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          // Simulate API call delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          const data = await api.post<AuthResponse>('/api/auth/signup', credentials);
 
-          // Check if user already exists
-          const existingUser = MOCK_USERS.find(
-            u => u.email === credentials.email
-          );
-          if (existingUser) {
-            set({
-              error: 'User with this email already exists',
-              isLoading: false,
-            });
-            return false;
-          }
-
-          // Create new user
-          const newUser: MockUser = {
-            id: `user-${Date.now()}`,
-            email: credentials.email,
-            username: credentials.username,
-            password: credentials.password,
-            role: 'user',
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${credentials.username}`,
-            createdAt: new Date(),
-            preferences: {
+          const user: User = {
+            id: data.user.id,
+            email: data.user.email,
+            username: data.user.username,
+            role: data.user.role,
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.username}`,
+            createdAt: new Date(data.user.createdAt),
+            preferences: data.user.preferences || {
               theme: 'dark',
               language: 'en',
               explicitContent: false,
@@ -155,32 +87,33 @@ export const useAuthStore = create<AuthStore>()(
             },
           };
 
-          // In a real app, this would be saved to a database
-          MOCK_USERS.push(newUser);
-
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { password, ...userWithoutPassword } = newUser;
           set({
-            user: userWithoutPassword,
+            user,
             isAuthenticated: true,
             isLoading: false,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
           });
-
           return true;
-        } catch {
-          set({
-            error: 'Signup failed. Please try again.',
-            isLoading: false,
-          });
+        } catch (err) {
+          const message = err instanceof ApiError ? err.message : 'Signup failed. Please try again.';
+          set({ error: message, isLoading: false });
           return false;
         }
       },
 
       logout: () => {
+        const { accessToken, refreshToken } = get();
+        // Fire and forget logout request
+        if (accessToken && refreshToken) {
+          api.post('/api/auth/logout', { refreshToken }).catch(() => {});
+        }
         set({
           user: null,
           isAuthenticated: false,
           error: null,
+          accessToken: null,
+          refreshToken: null,
         });
       },
 
@@ -208,6 +141,8 @@ export const useAuthStore = create<AuthStore>()(
       partialize: state => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
       }),
     }
   )
