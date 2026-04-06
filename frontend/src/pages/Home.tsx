@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Play, Pause, Heart, MoreHorizontal } from 'lucide-react';
+import { Play, Pause, Heart, MoreHorizontal, Loader2 } from 'lucide-react';
 import { usePlaybackStore } from '../store/playbackStore';
+import { api } from '../services/api';
 import type { Track } from '../types';
 
 const HomeContainer = styled.div`
@@ -176,100 +177,82 @@ const RecentlyPlayedImage = styled.img`
   object-fit: cover;
 `;
 
-const mockTracks: Track[] = [
-  {
-    id: '1',
-    name: 'Blinding Lights',
-    artist: 'The Weeknd',
-    album: 'After Hours',
-    duration: 200,
-    imageUrl: 'https://picsum.photos/300/300?random=1',
-  },
-  {
-    id: '2',
-    name: 'Shape of You',
-    artist: 'Ed Sheeran',
-    album: '÷ (Divide)',
-    duration: 233,
-    imageUrl: 'https://picsum.photos/300/300?random=2',
-  },
-  {
-    id: '3',
-    name: 'Someone Like You',
-    artist: 'Adele',
-    album: '21',
-    duration: 285,
-    imageUrl: 'https://picsum.photos/300/300?random=3',
-  },
-  {
-    id: '4',
-    name: 'Starboy',
-    artist: 'The Weeknd ft. Daft Punk',
-    album: 'Starboy',
-    duration: 230,
-    imageUrl: 'https://picsum.photos/300/300?random=4',
-  },
-  {
-    id: '5',
-    name: 'Levitating',
-    artist: 'Dua Lipa',
-    album: 'Future Nostalgia',
-    duration: 203,
-    imageUrl: 'https://picsum.photos/300/300?random=5',
-  },
-  {
-    id: '6',
-    name: 'Watermelon Sugar',
-    artist: 'Harry Styles',
-    album: 'Fine Line',
-    duration: 174,
-    imageUrl: 'https://picsum.photos/300/300?random=6',
-  },
-];
+const LoadingWrap = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  color: #b3b3b3;
 
-const mockPlaylists = [
-  {
-    id: '1',
-    name: 'Daily Mix 1',
-    description: 'The Weeknd, Dua Lipa, Doja Cat and more',
-    imageUrl: 'https://picsum.photos/300/300?random=7',
-  },
-  {
-    id: '2',
-    name: 'Chill Hits',
-    description: 'Kick back to the best new and recent chill hits',
-    imageUrl: 'https://picsum.photos/300/300?random=8',
-  },
-  {
-    id: '3',
-    name: 'Focus Flow',
-    description: 'Uptempo instrumental beats to help you stay focused',
-    imageUrl: 'https://picsum.photos/300/300?random=9',
-  },
-  {
-    id: '4',
-    name: 'Workout',
-    description: 'Keep the energy high with these workout hits',
-    imageUrl: 'https://picsum.photos/300/300?random=10',
-  },
-  {
-    id: '5',
-    name: 'Rock Classics',
-    description: 'Rock legends & epic songs that continue to inspire',
-    imageUrl: 'https://picsum.photos/300/300?random=11',
-  },
-  {
-    id: '6',
-    name: 'Jazz Vibes',
-    description: 'Smooth jazz for any mood',
-    imageUrl: 'https://picsum.photos/300/300?random=12',
-  },
-];
+  svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+interface ApiTrack {
+  id: string;
+  title: string;
+  duration: number;
+  imageUrl?: string | null;
+  audioUrl?: string | null;
+  artist?: { name: string } | null;
+  album?: { title: string; imageUrl?: string | null } | null;
+}
+
+interface ApiPlaylist {
+  id: string;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+}
+
+function mapTrack(t: ApiTrack): Track {
+  return {
+    id: t.id,
+    name: t.title,
+    artist: t.artist?.name || 'Unknown Artist',
+    album: t.album?.title || 'Unknown Album',
+    duration: t.duration,
+    imageUrl: t.imageUrl || t.album?.imageUrl || `https://picsum.photos/300/300?random=${t.id}`,
+    audioUrl: t.audioUrl || undefined,
+  };
+}
 
 const Home = () => {
   const { currentTrack, isPlaying, setCurrentTrack, setIsPlaying, addToQueue } =
     usePlaybackStore();
   const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [playlists, setPlaylists] = useState<ApiPlaylist[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [tracksRes, playlistsRes] = await Promise.allSettled([
+          api.get<{ tracks: ApiTrack[] }>('/api/tracks?limit=12'),
+          api.get<{ playlists: ApiPlaylist[] }>('/api/playlists?limit=6'),
+        ]);
+
+        if (tracksRes.status === 'fulfilled' && tracksRes.value.tracks) {
+          setTracks(tracksRes.value.tracks.map(mapTrack));
+        }
+        if (playlistsRes.status === 'fulfilled' && playlistsRes.value.playlists) {
+          setPlaylists(playlistsRes.value.playlists);
+        }
+      } catch {
+        // Silently fail — UI shows empty state
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handlePlayTrack = (track: Track) => {
     if (currentTrack?.id === track.id) {
@@ -282,6 +265,7 @@ const Home = () => {
 
   const handleLikeTrack = (trackId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    api.post(`/api/tracks/${trackId}/like`).catch(() => {});
     setLikedTracks(prev => {
       const newSet = new Set(prev);
       if (newSet.has(trackId)) {
@@ -293,60 +277,72 @@ const Home = () => {
     });
   };
 
+  if (loading) {
+    return (
+      <HomeContainer>
+        <LoadingWrap><Loader2 size={32} /></LoadingWrap>
+      </HomeContainer>
+    );
+  }
+
   return (
     <HomeContainer>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Recently played</SectionTitle>
-          <ShowAllButton>Show all</ShowAllButton>
-        </SectionHeader>
-        <RecentlyPlayedGrid>
-          {mockPlaylists.map(playlist => (
-            <RecentlyPlayedCard key={playlist.id}>
-              <RecentlyPlayedImage
-                src={playlist.imageUrl}
-                alt={playlist.name}
-              />
-              <div style={{ flex: 1 }}>
+      {playlists.length > 0 && (
+        <Section>
+          <SectionHeader>
+            <SectionTitle>Recently played</SectionTitle>
+            <ShowAllButton>Show all</ShowAllButton>
+          </SectionHeader>
+          <RecentlyPlayedGrid>
+            {playlists.map(playlist => (
+              <RecentlyPlayedCard key={playlist.id}>
+                <RecentlyPlayedImage
+                  src={playlist.imageUrl || `https://picsum.photos/300/300?random=${playlist.id}`}
+                  alt={playlist.name}
+                />
+                <div style={{ flex: 1 }}>
+                  <CardTitle>{playlist.name}</CardTitle>
+                  <CardSubtitle>{playlist.description}</CardSubtitle>
+                </div>
+                <PlayButtonOverlay
+                  className="play-button"
+                  onClick={() => {
+                    tracks.slice(0, 6).forEach(track => addToQueue(track));
+                  }}
+                >
+                  <Play size={20} fill="currentColor" />
+                </PlayButtonOverlay>
+              </RecentlyPlayedCard>
+            ))}
+          </RecentlyPlayedGrid>
+        </Section>
+      )}
+
+      {playlists.length > 0 && (
+        <Section>
+          <SectionHeader>
+            <SectionTitle>Made for you</SectionTitle>
+            <ShowAllButton>Show all</ShowAllButton>
+          </SectionHeader>
+          <Grid>
+            {playlists.map(playlist => (
+              <Card key={playlist.id}>
+                <CardImage src={playlist.imageUrl || `https://picsum.photos/300/300?random=m${playlist.id}`} alt={playlist.name} />
                 <CardTitle>{playlist.name}</CardTitle>
                 <CardSubtitle>{playlist.description}</CardSubtitle>
-              </div>
-              <PlayButtonOverlay
-                className="play-button"
-                onClick={() => {
-                  mockTracks.slice(0, 6).forEach(track => addToQueue(track));
-                }}
-              >
-                <Play size={20} fill="currentColor" />
-              </PlayButtonOverlay>
-            </RecentlyPlayedCard>
-          ))}
-        </RecentlyPlayedGrid>
-      </Section>
-
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Made for you</SectionTitle>
-          <ShowAllButton>Show all</ShowAllButton>
-        </SectionHeader>
-        <Grid>
-          {mockPlaylists.map(playlist => (
-            <Card key={playlist.id}>
-              <CardImage src={playlist.imageUrl} alt={playlist.name} />
-              <CardTitle>{playlist.name}</CardTitle>
-              <CardSubtitle>{playlist.description}</CardSubtitle>
-              <PlayButtonOverlay
-                className="play-button"
-                onClick={() => {
-                  mockTracks.slice(0, 6).forEach(track => addToQueue(track));
-                }}
-              >
-                <Play size={20} fill="currentColor" />
-              </PlayButtonOverlay>
-            </Card>
-          ))}
-        </Grid>
-      </Section>
+                <PlayButtonOverlay
+                  className="play-button"
+                  onClick={() => {
+                    tracks.slice(0, 6).forEach(track => addToQueue(track));
+                  }}
+                >
+                  <Play size={20} fill="currentColor" />
+                </PlayButtonOverlay>
+              </Card>
+            ))}
+          </Grid>
+        </Section>
+      )}
 
       <Section>
         <SectionHeader>
@@ -354,7 +350,7 @@ const Home = () => {
           <ShowAllButton>Show all</ShowAllButton>
         </SectionHeader>
         <Grid>
-          {mockTracks.map(track => (
+          {tracks.map(track => (
             <Card key={track.id}>
               <CardImage src={track.imageUrl} alt={track.name} />
               <CardTitle>{track.name}</CardTitle>
