@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { Search as SearchIcon, Play, Pause } from 'lucide-react';
+import { Search as SearchIcon, Play, Pause, Loader2 } from 'lucide-react';
 import { usePlaybackStore } from '../store/playbackStore';
+import { api } from '../services/api';
 import type { Track, Album, Artist } from '../types';
 
 const SearchContainer = styled.div`
@@ -302,102 +303,82 @@ const ArtistType = styled.p`
   margin: 4px 0 0 0;
 `;
 
-const mockTracks: Track[] = [
-  {
-    id: '1',
-    name: 'Blinding Lights',
-    artist: 'The Weeknd',
-    album: 'After Hours',
-    duration: 200,
-    imageUrl: 'https://picsum.photos/300/300?random=1',
-  },
-  {
-    id: '2',
-    name: 'Shape of You',
-    artist: 'Ed Sheeran',
-    album: '÷ (Divide)',
-    duration: 233,
-    imageUrl: 'https://picsum.photos/300/300?random=2',
-  },
-  {
-    id: '3',
-    name: 'Someone Like You',
-    artist: 'Adele',
-    album: '21',
-    duration: 285,
-    imageUrl: 'https://picsum.photos/300/300?random=3',
-  },
-  {
-    id: '4',
-    name: 'Starboy',
-    artist: 'The Weeknd ft. Daft Punk',
-    album: 'Starboy',
-    duration: 230,
-    imageUrl: 'https://picsum.photos/300/300?random=4',
-  },
-];
+const LoadingWrap = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: #b3b3b3;
 
-const mockAlbums: Album[] = [
-  {
-    id: '1',
-    name: 'After Hours',
-    artist: 'The Weeknd',
-    imageUrl: 'https://picsum.photos/300/300?random=13',
-    releaseDate: '2020',
-    tracks: [],
-  },
-  {
-    id: '2',
-    name: '÷ (Divide)',
-    artist: 'Ed Sheeran',
-    imageUrl: 'https://picsum.photos/300/300?random=14',
-    releaseDate: '2017',
-    tracks: [],
-  },
-  {
-    id: '3',
-    name: '21',
-    artist: 'Adele',
-    imageUrl: 'https://picsum.photos/300/300?random=15',
-    releaseDate: '2011',
-    tracks: [],
-  },
-  {
-    id: '4',
-    name: 'Starboy',
-    artist: 'The Weeknd',
-    imageUrl: 'https://picsum.photos/300/300?random=16',
-    releaseDate: '2016',
-    tracks: [],
-  },
-];
+  svg {
+    animation: spin 1s linear infinite;
+  }
 
-const mockArtists: Artist[] = [
-  {
-    id: '1',
-    name: 'The Weeknd',
-    imageUrl: 'https://picsum.photos/300/300?random=17',
-    followers: 75432123,
-  },
-  {
-    id: '2',
-    name: 'Ed Sheeran',
-    imageUrl: 'https://picsum.photos/300/300?random=18',
-    followers: 83210987,
-  },
-  {
-    id: '3',
-    name: 'Adele',
-    imageUrl: 'https://picsum.photos/300/300?random=19',
-    followers: 65432109,
-  },
-  {
-    id: '4',
-    name: 'Dua Lipa',
-    imageUrl: 'https://picsum.photos/300/300?random=20',
-    followers: 70234567,
-  },
-];
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+interface ApiTrack {
+  id: string;
+  title: string;
+  duration: number;
+  imageUrl?: string | null;
+  audioUrl?: string | null;
+  artist?: { name: string } | null;
+  album?: { title: string; imageUrl?: string | null } | null;
+}
+
+interface ApiAlbum {
+  id: string;
+  title: string;
+  imageUrl?: string | null;
+  releaseYear?: number | null;
+  artist?: { name: string } | null;
+}
+
+interface ApiArtist {
+  id: string;
+  name: string;
+  imageUrl?: string | null;
+}
+
+interface SearchResponse {
+  tracks?: ApiTrack[];
+  albums?: ApiAlbum[];
+  artists?: ApiArtist[];
+}
+
+function mapTrack(t: ApiTrack): Track {
+  return {
+    id: t.id,
+    name: t.title,
+    artist: t.artist?.name || 'Unknown Artist',
+    album: t.album?.title || 'Unknown Album',
+    duration: t.duration,
+    imageUrl: t.imageUrl || t.album?.imageUrl || `https://picsum.photos/300/300?random=${t.id}`,
+    audioUrl: t.audioUrl || undefined,
+  };
+}
+
+function mapAlbum(a: ApiAlbum): Album {
+  return {
+    id: a.id,
+    name: a.title,
+    artist: a.artist?.name || 'Unknown Artist',
+    imageUrl: a.imageUrl || `https://picsum.photos/300/300?random=a${a.id}`,
+    releaseDate: a.releaseYear?.toString() || '',
+    tracks: [],
+  };
+}
+
+function mapArtist(a: ApiArtist): Artist {
+  return {
+    id: a.id,
+    name: a.name,
+    imageUrl: a.imageUrl || `https://picsum.photos/300/300?random=ar${a.id}`,
+  };
+}
 
 const categories = [
   { name: 'Podcasts', icon: '🎙️', color: '#00D632' },
@@ -412,10 +393,42 @@ const categories = [
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [searching, setSearching] = useState(false);
   const { currentTrack, isPlaying, setCurrentTrack, setIsPlaying } =
     usePlaybackStore();
 
   const showResults = searchQuery.trim().length > 0;
+
+  const performSearch = useCallback(async (q: string) => {
+    if (!q.trim()) {
+      setTracks([]);
+      setAlbums([]);
+      setArtists([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      const data = await api.get<SearchResponse>(`/api/search?q=${encodeURIComponent(q)}`);
+      setTracks((data.tracks || []).map(mapTrack));
+      setAlbums((data.albums || []).map(mapAlbum));
+      setArtists((data.artists || []).map(mapArtist));
+    } catch {
+      // silently fail
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      performSearch(searchQuery);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery, performSearch]);
 
   const handlePlayTrack = (track: Track) => {
     if (currentTrack?.id === track.id) {
@@ -462,69 +475,87 @@ const Search = () => {
         </CategoryGrid>
       )}
 
-      <SearchResults className={showResults ? 'visible' : ''}>
-        <Section>
-          <SectionTitle>Top results</SectionTitle>
-          <TrackList>
-            {mockTracks.map((track, index) => (
-              <TrackRow key={track.id} onClick={() => handlePlayTrack(track)}>
-                <TrackIndex className="track-index">{index + 1}</TrackIndex>
-                <TrackPlay className="track-play">
-                  {currentTrack?.id === track.id && isPlaying ? (
-                    <Pause size={16} fill="currentColor" />
-                  ) : (
-                    <Play size={16} fill="currentColor" />
-                  )}
-                </TrackPlay>
-                <TrackInfo>
-                  <TrackImage src={track.imageUrl} alt={track.name} />
-                  <TrackDetails>
-                    <TrackName>{track.name}</TrackName>
-                    <TrackArtist>{track.artist}</TrackArtist>
-                  </TrackDetails>
-                </TrackInfo>
-                <TrackAlbum>{track.album}</TrackAlbum>
-                <TrackDuration>{formatDuration(track.duration)}</TrackDuration>
-              </TrackRow>
-            ))}
-          </TrackList>
-        </Section>
+      {showResults && searching && (
+        <LoadingWrap><Loader2 size={28} /></LoadingWrap>
+      )}
 
-        <Section>
-          <SectionTitle>Albums</SectionTitle>
-          <AlbumGrid>
-            {mockAlbums.map(album => (
-              <AlbumCard key={album.id}>
-                <AlbumImage src={album.imageUrl} alt={album.name} />
-                <AlbumTitle>{album.name}</AlbumTitle>
-                <AlbumArtist>{album.artist}</AlbumArtist>
-                <PlayButtonOverlay
-                  onClick={() => console.log('Play album', album.id)}
-                >
-                  <Play size={20} fill="currentColor" />
-                </PlayButtonOverlay>
-              </AlbumCard>
-            ))}
-          </AlbumGrid>
-        </Section>
+      {showResults && !searching && (
+        <>
+          {tracks.length > 0 && (
+            <Section>
+              <SectionTitle>Top results</SectionTitle>
+              <TrackList>
+                {tracks.map((track, index) => (
+                  <TrackRow key={track.id} onClick={() => handlePlayTrack(track)}>
+                    <TrackIndex className="track-index">{index + 1}</TrackIndex>
+                    <TrackPlay className="track-play">
+                      {currentTrack?.id === track.id && isPlaying ? (
+                        <Pause size={16} fill="currentColor" />
+                      ) : (
+                        <Play size={16} fill="currentColor" />
+                      )}
+                    </TrackPlay>
+                    <TrackInfo>
+                      <TrackImage src={track.imageUrl} alt={track.name} />
+                      <TrackDetails>
+                        <TrackName>{track.name}</TrackName>
+                        <TrackArtist>{track.artist}</TrackArtist>
+                      </TrackDetails>
+                    </TrackInfo>
+                    <TrackAlbum>{track.album}</TrackAlbum>
+                    <TrackDuration>{formatDuration(track.duration)}</TrackDuration>
+                  </TrackRow>
+                ))}
+              </TrackList>
+            </Section>
+          )}
 
-        <Section>
-          <SectionTitle>Artists</SectionTitle>
-          <ArtistGrid>
-            {mockArtists.map(artist => (
-              <ArtistCard key={artist.id}>
-                <ArtistImage
-                  src={artist.imageUrl}
-                  alt={artist.name}
-                  className="artist-image"
-                />
-                <ArtistName>{artist.name}</ArtistName>
-                <ArtistType>Artist</ArtistType>
-              </ArtistCard>
-            ))}
-          </ArtistGrid>
-        </Section>
-      </SearchResults>
+          {albums.length > 0 && (
+            <Section>
+              <SectionTitle>Albums</SectionTitle>
+              <AlbumGrid>
+                {albums.map(album => (
+                  <AlbumCard key={album.id}>
+                    <AlbumImage src={album.imageUrl} alt={album.name} />
+                    <AlbumTitle>{album.name}</AlbumTitle>
+                    <AlbumArtist>{album.artist}</AlbumArtist>
+                    <PlayButtonOverlay
+                      onClick={() => console.log('Play album', album.id)}
+                    >
+                      <Play size={20} fill="currentColor" />
+                    </PlayButtonOverlay>
+                  </AlbumCard>
+                ))}
+              </AlbumGrid>
+            </Section>
+          )}
+
+          {artists.length > 0 && (
+            <Section>
+              <SectionTitle>Artists</SectionTitle>
+              <ArtistGrid>
+                {artists.map(artist => (
+                  <ArtistCard key={artist.id}>
+                    <ArtistImage
+                      src={artist.imageUrl}
+                      alt={artist.name}
+                      className="artist-image"
+                    />
+                    <ArtistName>{artist.name}</ArtistName>
+                    <ArtistType>Artist</ArtistType>
+                  </ArtistCard>
+                ))}
+              </ArtistGrid>
+            </Section>
+          )}
+
+          {tracks.length === 0 && albums.length === 0 && artists.length === 0 && (
+            <LoadingWrap style={{ color: 'rgba(255,255,255,0.4)' }}>
+              No results found for "{searchQuery}"
+            </LoadingWrap>
+          )}
+        </>
+      )}
     </SearchContainer>
   );
 };
