@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import {
   Search,
@@ -12,8 +12,10 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
-import { mockSystemUsers } from '../../data/mockData';
+import { api } from '../../services/api';
+import type { MockSystemUser } from '../../data/mockData';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -339,22 +341,76 @@ const PageButton = styled.button<{ $active?: boolean }>`
   }
 `;
 
+const LoadingWrap = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  color: #b3b3b3;
+
+  svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+interface ApiUser {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  status: string;
+  avatar?: string | null;
+  createdAt: string;
+}
+
+function mapUser(u: ApiUser): MockSystemUser {
+  return {
+    id: u.id,
+    username: u.username,
+    email: u.email,
+    role: (u.role?.toLowerCase() || 'user') as 'admin' | 'user' | 'guest',
+    status: (u.status?.toLowerCase() || 'active') as 'active' | 'suspended' | 'inactive',
+    joinDate: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : '',
+    lastActive: '',
+    playlists: 0,
+    streams: 0,
+    avatar: u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`,
+  };
+}
+
 export default function UsersManagement() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [users, setUsers] = useState<MockSystemUser[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredUsers = mockSystemUsers.filter(
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const data = await api.get<{ users: ApiUser[] }>('/api/users?limit=50');
+        setUsers((data.users || []).map(mapUser));
+      } catch {
+        // silently fail
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const filteredUsers = users.filter(
     u =>
       u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const activeCount = mockSystemUsers.filter(u => u.status === 'active').length;
-  const suspendedCount = mockSystemUsers.filter(
-    u => u.status === 'suspended'
-  ).length;
-  const inactiveCount = mockSystemUsers.filter(
-    u => u.status === 'inactive'
-  ).length;
+  const activeCount = users.filter(u => u.status === 'active').length;
+  const suspendedCount = users.filter(u => u.status === 'suspended').length;
+  const inactiveCount = users.filter(u => u.status === 'inactive').length;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -401,7 +457,7 @@ export default function UsersManagement() {
         <MiniStat $color="#a78bfa">
           <div className="dot" />
           <span className="label">Total</span>
-          <span className="value">{mockSystemUsers.length}</span>
+          <span className="value">{users.length}</span>
         </MiniStat>
       </StatsRow>
 
@@ -425,6 +481,9 @@ export default function UsersManagement() {
         </FilterButton>
       </Toolbar>
 
+      {loading ? (
+        <LoadingWrap><Loader2 size={32} /></LoadingWrap>
+      ) : (
       <Table>
         <TableHeader>
           <span>User</span>
@@ -466,7 +525,7 @@ export default function UsersManagement() {
 
         <Pagination>
           <span className="info">
-            Showing {filteredUsers.length} of {mockSystemUsers.length} users
+            Showing {filteredUsers.length} of {users.length} users
           </span>
           <div className="pages">
             <PageButton>
@@ -480,6 +539,7 @@ export default function UsersManagement() {
           </div>
         </Pagination>
       </Table>
+      )}
     </Container>
   );
 }

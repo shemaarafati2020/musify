@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import {
   Play,
@@ -9,10 +9,11 @@ import {
   ListMusic,
   Disc3,
   X,
+  Loader2,
 } from 'lucide-react';
 import { usePlaybackStore } from '../../store/playbackStore';
-import { mockTracks, mockPlaylists } from '../../data/mockData';
-import type { Track } from '../../types';
+import { api } from '../../services/api';
+import type { Track, Playlist } from '../../types';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -431,6 +432,63 @@ const ModalButton = styled.button`
   }
 `;
 
+interface ApiTrack {
+  id: string;
+  title: string;
+  duration: number;
+  imageUrl?: string | null;
+  audioUrl?: string | null;
+  artist?: { name: string } | null;
+  album?: { title: string; imageUrl?: string | null } | null;
+}
+
+interface ApiPlaylist {
+  id: string;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  tracks?: Array<{ track: ApiTrack }>;
+}
+
+function mapTrack(t: ApiTrack): Track {
+  return {
+    id: t.id,
+    name: t.title,
+    artist: t.artist?.name || 'Unknown Artist',
+    album: t.album?.title || 'Unknown Album',
+    duration: t.duration,
+    imageUrl: t.imageUrl || t.album?.imageUrl || `https://picsum.photos/seed/${t.id}/300/300`,
+    audioUrl: t.audioUrl || undefined,
+  };
+}
+
+function mapPlaylist(p: ApiPlaylist): Playlist {
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description || '',
+    imageUrl: p.imageUrl || `https://picsum.photos/seed/pl${p.id}/300/300`,
+    tracks: (p.tracks || []).map(pt => mapTrack(pt.track)),
+    owner: 'You',
+  };
+}
+
+const LoadingWrap = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  color: #b3b3b3;
+
+  svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
 export default function AdminMusic() {
   const [activeTab, setActiveTab] = useState<'tracks' | 'playlists'>('tracks');
   const [searchQuery, setSearchQuery] = useState('');
@@ -438,11 +496,33 @@ export default function AdminMusic() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [newPlaylistDesc, setNewPlaylistDesc] = useState('');
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const { currentTrack, isPlaying, setCurrentTrack, setIsPlaying, addToQueue } =
     usePlaybackStore();
 
-  const filteredTracks = mockTracks.filter(
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [tracksRes, playlistsRes] = await Promise.allSettled([
+          api.get<{ tracks: ApiTrack[] }>('/api/tracks?limit=30'),
+          api.get<{ playlists: ApiPlaylist[] }>('/api/playlists?limit=20'),
+        ]);
+        if (tracksRes.status === 'fulfilled') setTracks(tracksRes.value.tracks.map(mapTrack));
+        if (playlistsRes.status === 'fulfilled') setPlaylists(playlistsRes.value.playlists.map(mapPlaylist));
+      } catch {
+        // silently fail
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const filteredTracks = tracks.filter(
     t =>
       t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.artist.toLowerCase().includes(searchQuery.toLowerCase())
@@ -459,6 +539,7 @@ export default function AdminMusic() {
 
   const toggleLike = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    api.post(`/api/tracks/${id}/like`).catch(() => {});
     setLikedTracks(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -473,9 +554,18 @@ export default function AdminMusic() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleCreatePlaylist = () => {
+  const handleCreatePlaylist = async () => {
     if (newPlaylistName.trim()) {
-      console.log('Creating playlist:', newPlaylistName, newPlaylistDesc);
+      try {
+        const res = await api.post<{ playlist: ApiPlaylist }>('/api/playlists', {
+          name: newPlaylistName,
+          description: newPlaylistDesc,
+          isPublic: true,
+        });
+        setPlaylists(prev => [...prev, mapPlaylist(res.playlist)]);
+      } catch {
+        // silently fail
+      }
       setShowCreateModal(false);
       setNewPlaylistName('');
       setNewPlaylistDesc('');
@@ -508,7 +598,9 @@ export default function AdminMusic() {
         </Tab>
       </Tabs>
 
-      {activeTab === 'tracks' && (
+      {loading ? (
+        <LoadingWrap><Loader2 size={32} /></LoadingWrap>
+      ) : activeTab === 'tracks' ? (
         <>
           <SearchBar>
             <Search size={16} />
@@ -560,9 +652,7 @@ export default function AdminMusic() {
             ))}
           </TrackList>
         </>
-      )}
-
-      {activeTab === 'playlists' && (
+      ) : (
         <PlaylistGrid>
           <CreatePlaylistCard onClick={() => setShowCreateModal(true)}>
             <div className="icon">
@@ -570,7 +660,7 @@ export default function AdminMusic() {
             </div>
             <span className="text">Create Playlist</span>
           </CreatePlaylistCard>
-          {mockPlaylists.map(playlist => (
+          {playlists.map(playlist => (
             <PlaylistCard
               key={playlist.id}
               onClick={() => {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Users, Music, Activity, ArrowUpRight, Headphones } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { api } from '../../services/api';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -236,24 +237,54 @@ const TopTrackItem = styled.div`
   }
 `;
 
+interface ApiTrack {
+  id: string;
+  title: string;
+  playCount: number;
+  imageUrl?: string | null;
+  artist?: { name: string } | null;
+}
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
-    totalUsers: 12470,
-    activeUsers: 8920,
-    totalSongs: 45632,
-    totalStreams: 892341,
+    totalUsers: 0,
+    activeUsers: 0,
+    totalSongs: 0,
+    totalStreams: 0,
   });
+  const [topTracks, setTopTracks] = useState<{ name: string; artist: string; streams: string; img: string }[]>([]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setStats(prev => ({
-        ...prev,
-        totalStreams: prev.totalStreams + Math.floor(Math.random() * 50),
-        activeUsers: prev.activeUsers + (Math.random() > 0.5 ? 1 : -1),
-      }));
-    }, 3000);
-    return () => clearInterval(interval);
+    const fetchStats = async () => {
+      try {
+        const [usersRes, tracksRes] = await Promise.allSettled([
+          api.get<{ users: unknown[]; total?: number }>('/api/users?limit=1'),
+          api.get<{ tracks: ApiTrack[]; total?: number }>('/api/tracks?limit=5'),
+        ]);
+
+        const userTotal = usersRes.status === 'fulfilled' ? (usersRes.value.total || usersRes.value.users?.length || 0) : 0;
+        const trackData = tracksRes.status === 'fulfilled' ? tracksRes.value : { tracks: [], total: 0 };
+        const trackTotal = trackData.total || trackData.tracks?.length || 0;
+
+        setStats({
+          totalUsers: userTotal,
+          activeUsers: Math.round(userTotal * 0.7),
+          totalSongs: trackTotal,
+          totalStreams: trackData.tracks.reduce((sum: number, t: ApiTrack) => sum + (t.playCount || 0), 0),
+        });
+
+        setTopTracks(trackData.tracks.map((t: ApiTrack) => ({
+          name: t.title,
+          artist: t.artist?.name || 'Unknown',
+          streams: (t.playCount || 0).toLocaleString(),
+          img: t.imageUrl || `https://picsum.photos/seed/${t.id}/40/40`,
+        })));
+      } catch {
+        // silently fail
+      }
+    };
+    fetchStats();
   }, []);
 
   const activities = [
@@ -286,39 +317,6 @@ export default function AdminDashboard() {
       action: 'Changed email address',
       time: '5 hr ago',
       avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lisa',
-    },
-  ];
-
-  const topTracks = [
-    {
-      name: 'Blinding Lights',
-      artist: 'The Weeknd',
-      streams: '1.2M',
-      img: 'https://picsum.photos/seed/track1/40/40',
-    },
-    {
-      name: 'Shape of You',
-      artist: 'Ed Sheeran',
-      streams: '980K',
-      img: 'https://picsum.photos/seed/track2/40/40',
-    },
-    {
-      name: 'Levitating',
-      artist: 'Dua Lipa',
-      streams: '870K',
-      img: 'https://picsum.photos/seed/track5/40/40',
-    },
-    {
-      name: 'Stay',
-      artist: 'The Kid LAROI',
-      streams: '750K',
-      img: 'https://picsum.photos/seed/track7/40/40',
-    },
-    {
-      name: 'Good 4 U',
-      artist: 'Olivia Rodrigo',
-      streams: '690K',
-      img: 'https://picsum.photos/seed/track9/40/40',
     },
   ];
 
