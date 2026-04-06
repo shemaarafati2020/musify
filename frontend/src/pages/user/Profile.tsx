@@ -8,9 +8,11 @@ import {
   Clock,
   Shield,
   Save,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
+import { api } from '../../services/api';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -238,6 +240,23 @@ function ProfileContent() {
     username: user?.username || '',
     email: user?.email || '',
   });
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    setSaveMsg('');
+    try {
+      await api.put(`/api/users/${user.id}`, formData);
+      setSaveMsg('Profile updated!');
+    } catch {
+      setSaveMsg('Failed to save changes.');
+    } finally {
+      setSaving(false);
+      setTimeout(() => setSaveMsg(''), 3000);
+    }
+  };
 
   return (
     <Container>
@@ -340,10 +359,11 @@ function ProfileContent() {
               />
             </FormGroup>
           </FormGrid>
-          <SaveBtn>
-            <Save size={16} />
-            Save Changes
+          <SaveBtn onClick={handleSave} disabled={saving}>
+            {saving ? <Loader2 size={16} /> : <Save size={16} />}
+            {saving ? 'Saving...' : 'Save Changes'}
           </SaveBtn>
+          {saveMsg && <span style={{ color: saveMsg.includes('Failed') ? '#ff5252' : '#1db954', fontSize: 13, marginTop: 12, display: 'block' }}>{saveMsg}</span>}
         </EditSection>
       </Content>
     </Container>

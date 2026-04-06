@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Plus, Search, Heart, Play } from 'lucide-react';
+import { Plus, Search, Heart, Play, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
+import { api } from '../../services/api';
 
 const LibraryContainer = styled.div`
   padding: 24px 24px 24px;
@@ -198,18 +200,61 @@ const PlaylistCard = styled.div`
   }
 `;
 
+interface PlaylistItem {
+  id: string;
+  name: string;
+  tracks: number;
+  type: string;
+  imageUrl?: string;
+}
+
+const LoadingWrap = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  color: #b3b3b3;
+
+  svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
 function UserLibraryContent() {
   const [activeTab, setActiveTab] = useState('playlists');
   const [searchQuery, setSearchQuery] = useState('');
+  const [playlists, setPlaylists] = useState<PlaylistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const mockPlaylists = [
-    { id: 1, name: 'Liked Songs', tracks: 234, type: 'system' },
-    { id: 2, name: 'My Playlist #1', tracks: 42, type: 'user' },
-    { id: 3, name: 'Workout Mix', tracks: 89, type: 'user' },
-    { id: 4, name: 'Chill Vibes', tracks: 156, type: 'user' },
-    { id: 5, name: 'Road Trip', tracks: 73, type: 'user' },
-    { id: 6, name: 'Focus Flow', tracks: 201, type: 'user' },
-  ];
+  useEffect(() => {
+    const fetchPlaylists = async () => {
+      setLoading(true);
+      try {
+        const data = await api.get<{ playlists: Array<{ id: string; name: string; _count?: { tracks: number }; imageUrl?: string | null }> }>('/api/playlists?limit=20');
+        setPlaylists((data.playlists || []).map(p => ({
+          id: p.id,
+          name: p.name,
+          tracks: p._count?.tracks || 0,
+          type: 'user',
+          imageUrl: p.imageUrl || undefined,
+        })));
+      } catch {
+        // silently fail
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlaylists();
+  }, []);
+
+  const filteredPlaylists = playlists.filter(p =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <LibraryContainer>
@@ -255,33 +300,34 @@ function UserLibraryContent() {
 
       <SectionHeader>
         <h2>Playlists</h2>
-        <CreateButton>
+        <CreateButton onClick={() => navigate('/user/create-playlist')}>
           <Plus size={16} />
           Create Playlist
         </CreateButton>
       </SectionHeader>
 
-      <PlaylistGrid>
-        {mockPlaylists.map(playlist => (
-          <PlaylistCard key={playlist.id}>
-            <div className="playlist-cover">
-              {playlist.type === 'system' ? (
-                <Heart size={48} />
-              ) : (
-                <img
-                  src={`https://picsum.photos/seed/playlist${playlist.id}/180/180`}
-                  alt=""
-                />
-              )}
-              <div className="play-overlay">
-                <Play size={48} />
+      {loading ? (
+        <LoadingWrap><Loader2 size={32} /></LoadingWrap>
+      ) : (
+        <PlaylistGrid>
+          {filteredPlaylists.map(playlist => (
+            <PlaylistCard key={playlist.id}>
+              <div className="playlist-cover">
+                {playlist.imageUrl ? (
+                  <img src={playlist.imageUrl} alt="" />
+                ) : (
+                  <Heart size={48} />
+                )}
+                <div className="play-overlay">
+                  <Play size={48} />
+                </div>
               </div>
-            </div>
-            <div className="playlist-name">{playlist.name}</div>
-            <div className="playlist-info">{playlist.tracks} tracks</div>
-          </PlaylistCard>
-        ))}
-      </PlaylistGrid>
+              <div className="playlist-name">{playlist.name}</div>
+              <div className="playlist-info">{playlist.tracks} tracks</div>
+            </PlaylistCard>
+          ))}
+        </PlaylistGrid>
+      )}
     </LibraryContainer>
   );
 }

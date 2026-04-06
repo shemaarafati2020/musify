@@ -2,6 +2,7 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../contexts/AuthContext';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
+import { useAuthStore } from '../../store/authStore';
 
 const Container = styled.div`
   padding: 24px 24px 24px;
@@ -112,12 +113,28 @@ const Select = styled.select`
 
 function SettingsContent() {
   const { user } = useAuth();
+  const updatePrefs = useAuthStore(s => s.updateUserPreferences);
 
   const [autoplay, setAutoplay] = useState(user?.preferences?.autoplay ?? true);
   const [explicit, setExplicit] = useState(
     user?.preferences?.explicitContent ?? false
   );
   const [language, setLanguage] = useState(user?.preferences?.language ?? 'en');
+
+  const handleAutoplay = (val: boolean) => {
+    setAutoplay(val);
+    updatePrefs({ autoplay: val });
+  };
+
+  const handleExplicit = (val: boolean) => {
+    setExplicit(val);
+    updatePrefs({ explicitContent: val });
+  };
+
+  const handleLanguage = (val: string) => {
+    setLanguage(val);
+    updatePrefs({ language: val });
+  };
 
   return (
     <Container>
@@ -137,7 +154,7 @@ function SettingsContent() {
             <input
               type="checkbox"
               checked={autoplay}
-              onChange={e => setAutoplay(e.target.checked)}
+              onChange={e => handleAutoplay(e.target.checked)}
             />
             <span />
           </Toggle>
@@ -154,7 +171,7 @@ function SettingsContent() {
             <input
               type="checkbox"
               checked={explicit}
-              onChange={e => setExplicit(e.target.checked)}
+              onChange={e => handleExplicit(e.target.checked)}
             />
             <span />
           </Toggle>
@@ -170,7 +187,7 @@ function SettingsContent() {
               Choose language for the app.
             </SettingDescription>
           </SettingInfo>
-          <Select value={language} onChange={e => setLanguage(e.target.value)}>
+          <Select value={language} onChange={e => handleLanguage(e.target.value)}>
             <option value="en">English</option>
             <option value="es">Español</option>
             <option value="fr">Français</option>

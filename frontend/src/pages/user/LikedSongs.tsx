@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { Play, Pause, Heart, Clock, MoreHorizontal } from 'lucide-react';
+import { Play, Pause, Heart, Clock, MoreHorizontal, Loader2 } from 'lucide-react';
 import { usePlaybackStore } from '../../store/playbackStore';
+import { api } from '../../services/api';
 import type { Track } from '../../types';
 
 const fadeIn = keyframes`
@@ -227,88 +228,43 @@ const LikeButton = styled.button<{ $liked: boolean }>`
   }
 `;
 
-const likedTracksData: Track[] = [
-  {
-    id: '1',
-    name: 'Blinding Lights',
-    artist: 'The Weeknd',
-    album: 'After Hours',
-    duration: 200,
-    imageUrl: 'https://picsum.photos/seed/blindinglights/44/44',
-  },
-  {
-    id: '2',
-    name: 'Shape of You',
-    artist: 'Ed Sheeran',
-    album: '÷ (Divide)',
-    duration: 233,
-    imageUrl: 'https://picsum.photos/seed/shapeofyou/44/44',
-  },
-  {
-    id: '3',
-    name: 'Someone Like You',
-    artist: 'Adele',
-    album: '21',
-    duration: 285,
-    imageUrl: 'https://picsum.photos/seed/someonelikeyou/44/44',
-  },
-  {
-    id: '4',
-    name: 'Starboy',
-    artist: 'The Weeknd ft. Daft Punk',
-    album: 'Starboy',
-    duration: 230,
-    imageUrl: 'https://picsum.photos/seed/starboy/44/44',
-  },
-  {
-    id: '5',
-    name: 'Levitating',
-    artist: 'Dua Lipa',
-    album: 'Future Nostalgia',
-    duration: 203,
-    imageUrl: 'https://picsum.photos/seed/levitating/44/44',
-  },
-  {
-    id: '6',
-    name: 'Watermelon Sugar',
-    artist: 'Harry Styles',
-    album: 'Fine Line',
-    duration: 174,
-    imageUrl: 'https://picsum.photos/seed/watermelonsugar/44/44',
-  },
-  {
-    id: '7',
-    name: 'Peaches',
-    artist: 'Justin Bieber ft. Daniel Caesar, Giveon',
-    album: 'Justice',
-    duration: 198,
-    imageUrl: 'https://picsum.photos/seed/peaches/44/44',
-  },
-  {
-    id: '8',
-    name: 'Stay',
-    artist: 'The Kid LAROI & Justin Bieber',
-    album: 'F*CK LOVE 3',
-    duration: 141,
-    imageUrl: 'https://picsum.photos/seed/staysong/44/44',
-  },
-  {
-    id: '9',
-    name: 'Good 4 U',
-    artist: 'Olivia Rodrigo',
-    album: 'SOUR',
-    duration: 178,
-    imageUrl: 'https://picsum.photos/seed/good4u/44/44',
-  },
-  {
-    id: '10',
-    name: 'Industry Baby',
-    artist: 'Lil Nas X & Jack Harlow',
-    album: 'MONTERO',
-    duration: 212,
-    imageUrl: 'https://picsum.photos/seed/industrybaby/44/44',
-  },
-];
+const LoadingWrap = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  color: #b3b3b3;
+
+  svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+interface ApiTrack {
+  id: string;
+  title: string;
+  duration: number;
+  imageUrl?: string | null;
+  audioUrl?: string | null;
+  artist?: { name: string } | null;
+  album?: { title: string; imageUrl?: string | null } | null;
+}
+
+function mapTrack(t: ApiTrack): Track {
+  return {
+    id: t.id,
+    name: t.title,
+    artist: t.artist?.name || 'Unknown Artist',
+    album: t.album?.title || 'Unknown Album',
+    duration: t.duration,
+    imageUrl: t.imageUrl || t.album?.imageUrl || `https://picsum.photos/seed/${t.id}/44/44`,
+    audioUrl: t.audioUrl || undefined,
+  };
+}
 
 const formatDuration = (secs: number) => {
   const m = Math.floor(secs / 60);
@@ -319,9 +275,26 @@ const formatDuration = (secs: number) => {
 export default function LikedSongs() {
   const { currentTrack, isPlaying, setCurrentTrack, setIsPlaying, addToQueue } =
     usePlaybackStore();
-  const [likedTracks, setLikedTracks] = useState<Set<string>>(
-    new Set(likedTracksData.map(t => t.id))
-  );
+  const [likedTracksData, setLikedTracksData] = useState<Track[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const fetchLiked = async () => {
+      setLoading(true);
+      try {
+        const data = await api.get<{ tracks: ApiTrack[] }>('/api/tracks/liked');
+        const mapped = (data.tracks || []).map(mapTrack);
+        setLikedTracksData(mapped);
+        setLikedTracks(new Set(mapped.map(t => t.id)));
+      } catch {
+        // silently fail
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLiked();
+  }, []);
 
   const handlePlay = (track: Track) => {
     if (currentTrack?.id === track.id) {
@@ -339,6 +312,7 @@ export default function LikedSongs() {
 
   const toggleLike = (trackId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    api.post(`/api/tracks/${trackId}/like`).catch(() => {});
     setLikedTracks(prev => {
       const next = new Set(prev);
       if (next.has(trackId)) next.delete(trackId);
@@ -349,6 +323,14 @@ export default function LikedSongs() {
 
   const isCurrentlyPlaying = (track: Track) =>
     currentTrack?.id === track.id && isPlaying;
+
+  if (loading) {
+    return (
+      <Container>
+        <LoadingWrap><Loader2 size={32} /></LoadingWrap>
+      </Container>
+    );
+  }
 
   return (
     <Container>

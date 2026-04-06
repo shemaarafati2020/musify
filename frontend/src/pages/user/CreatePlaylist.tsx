@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Search, Plus, Check } from 'lucide-react';
+import { Search, Plus, Check, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { ProtectedRoute } from '../../components/ProtectedRoute';
+import { api } from '../../services/api';
 import type { Track } from '../../types';
 
 const Container = styled.div`
@@ -276,54 +277,56 @@ function CreatePlaylistContent() {
   const [selectedTracks, setSelectedTracks] = useState<string[]>([]);
   const [coverImage, setCoverImage] = useState<string | null>(null);
 
-  const mockTracks: Track[] = [
-    {
-      id: '1',
-      name: 'Blinding Lights',
-      artist: 'The Weeknd',
-      album: 'After Hours',
-      duration: 200,
-      imageUrl: 'https://picsum.photos/seed/track1/40/40',
-    },
-    {
-      id: '2',
-      name: 'Shape of You',
-      artist: 'Ed Sheeran',
-      album: '÷ (Divide)',
-      duration: 233,
-      imageUrl: 'https://picsum.photos/seed/track2/40/40',
-    },
-    {
-      id: '3',
-      name: 'Someone Like You',
-      artist: 'Adele',
-      album: '21',
-      duration: 285,
-      imageUrl: 'https://picsum.photos/seed/track3/40/40',
-    },
-    {
-      id: '4',
-      name: 'Starboy',
-      artist: 'The Weeknd ft. Daft Punk',
-      album: 'Starboy',
-      duration: 230,
-      imageUrl: 'https://picsum.photos/seed/track4/40/40',
-    },
-    {
-      id: '5',
-      name: 'Levitating',
-      artist: 'Dua Lipa',
-      album: 'Future Nostalgia',
-      duration: 203,
-      imageUrl: 'https://picsum.photos/seed/track5/40/40',
-    },
-  ];
+  const [availableTracks, setAvailableTracks] = useState<Track[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [creating, setCreating] = useState(false);
 
-  const filteredTracks = mockTracks.filter(
-    track =>
-      track.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      track.artist.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  interface ApiTrack {
+    id: string;
+    title: string;
+    duration: number;
+    imageUrl?: string | null;
+    audioUrl?: string | null;
+    artist?: { name: string } | null;
+    album?: { title: string; imageUrl?: string | null } | null;
+  }
+
+  const mapTrack = (t: ApiTrack): Track => ({
+    id: t.id,
+    name: t.title,
+    artist: t.artist?.name || 'Unknown Artist',
+    album: t.album?.title || 'Unknown Album',
+    duration: t.duration,
+    imageUrl: t.imageUrl || `https://picsum.photos/seed/${t.id}/40/40`,
+  });
+
+  const fetchTracks = useCallback(async (q: string) => {
+    setSearching(true);
+    try {
+      if (q.trim()) {
+        const data = await api.get<{ tracks?: ApiTrack[] }>(`/api/search?q=${encodeURIComponent(q)}&type=tracks`);
+        setAvailableTracks((data.tracks || []).map(mapTrack));
+      } else {
+        const data = await api.get<{ tracks: ApiTrack[] }>('/api/tracks?limit=20');
+        setAvailableTracks((data.tracks || []).map(mapTrack));
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTracks('');
+  }, [fetchTracks]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetchTracks(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery, fetchTracks]);
+
+  const filteredTracks = availableTracks;
 
   const handleTrackToggle = (trackId: string) => {
     setSelectedTracks(prev =>
@@ -333,7 +336,7 @@ function CreatePlaylistContent() {
     );
   };
 
-  const handleCreatePlaylist = () => {
+  const handleCreatePlaylist = async () => {
     if (!playlistName.trim()) {
       alert('Please enter a playlist name');
       return;
@@ -344,17 +347,25 @@ function CreatePlaylistContent() {
       return;
     }
 
-    // Here you would normally save the playlist to your backend
-    console.log('Creating playlist:', {
-      name: playlistName,
-      description,
-      tracks: selectedTracks,
-      coverImage,
-      createdBy: user?.id,
-    });
+    setCreating(true);
+    try {
+      const res = await api.post<{ playlist: { id: string } }>('/api/playlists', {
+        name: playlistName,
+        description,
+        isPublic: true,
+      });
 
-    // Navigate back to library
-    navigate('/library');
+      // Add selected tracks to the playlist
+      for (const trackId of selectedTracks) {
+        await api.post(`/api/playlists/${res.playlist.id}/tracks`, { trackId });
+      }
+
+      navigate('/library');
+    } catch {
+      alert('Failed to create playlist. Please try again.');
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -473,8 +484,8 @@ function CreatePlaylistContent() {
           Cancel
         </Button>
         <div className="button-group">
-          <Button $variant="primary" onClick={handleCreatePlaylist}>
-            Create Playlist
+          <Button $variant="primary" onClick={handleCreatePlaylist} disabled={creating}>
+            {creating ? <><Loader2 size={16} /> Creating...</> : 'Create Playlist'}
           </Button>
         </div>
       </Actions>
