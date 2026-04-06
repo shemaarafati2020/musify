@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import {
   Play,
@@ -7,8 +7,10 @@ import {
   MoreHorizontal,
   Grid3x3,
   List,
+  Loader2,
 } from 'lucide-react';
 import { usePlaybackStore } from '../store/playbackStore';
+import { api } from '../services/api';
 import type { Playlist } from '../types';
 
 const LibraryContainer = styled.div`
@@ -266,84 +268,88 @@ const ListPlay = styled.button`
   }
 `;
 
-const mockPlaylists: Playlist[] = [
-  {
-    id: '1',
-    name: 'Liked Songs',
-    description: '1,234 songs',
+const LoadingWrap = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  color: #b3b3b3;
+
+  svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(255,255,255,0.4);
+  font-size: 15px;
+`;
+
+interface ApiPlaylist {
+  id: string;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  isPublic?: boolean;
+  user?: { username: string } | null;
+  _count?: { tracks: number } | null;
+}
+
+function mapPlaylist(p: ApiPlaylist): Playlist {
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description || `${p._count?.tracks || 0} songs`,
     tracks: [],
-    imageUrl: 'https://picsum.photos/300/300?random=21',
-    owner: 'You',
-  },
-  {
-    id: '2',
-    name: 'Daily Mix 1',
-    description: 'The Weeknd, Dua Lipa, Doja Cat and more',
-    tracks: [],
-    imageUrl: 'https://picsum.photos/300/300?random=22',
-    owner: 'Spotify',
-  },
-  {
-    id: '3',
-    name: 'Chill Hits',
-    description: 'Kick back to the best new and recent chill hits',
-    tracks: [],
-    imageUrl: 'https://picsum.photos/300/300?random=23',
-    owner: 'Spotify',
-  },
-  {
-    id: '4',
-    name: 'Focus Flow',
-    description: 'Uptempo instrumental beats to help you stay focused',
-    tracks: [],
-    imageUrl: 'https://picsum.photos/300/300?random=24',
-    owner: 'Spotify',
-  },
-  {
-    id: '5',
-    name: 'Workout',
-    description: 'Keep the energy high with these workout hits',
-    tracks: [],
-    imageUrl: 'https://picsum.photos/300/300?random=25',
-    owner: 'Spotify',
-  },
-  {
-    id: '6',
-    name: 'Rock Classics',
-    description: 'Rock legends & epic songs that continue to inspire',
-    tracks: [],
-    imageUrl: 'https://picsum.photos/300/300?random=26',
-    owner: 'Spotify',
-  },
-  {
-    id: '7',
-    name: 'Jazz Vibes',
-    description: 'Smooth jazz for any mood',
-    tracks: [],
-    imageUrl: 'https://picsum.photos/300/300?random=27',
-    owner: 'Spotify',
-  },
-  {
-    id: '8',
-    name: 'Discover Weekly',
-    description: 'Your weekly mixtape of fresh music',
-    tracks: [],
-    imageUrl: 'https://picsum.photos/300/300?random=28',
-    owner: 'Spotify',
-  },
-];
+    imageUrl: p.imageUrl || `https://picsum.photos/300/300?random=p${p.id}`,
+    owner: p.user?.username || 'You',
+  };
+}
 
 const filters = ['Playlists', 'Podcasts', 'Albums', 'Artists', 'Downloaded'];
 
 const Library = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeFilter, setActiveFilter] = useState('Playlists');
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [loading, setLoading] = useState(true);
   const { isPlaying, setIsPlaying } = usePlaybackStore();
+
+  useEffect(() => {
+    const fetchPlaylists = async () => {
+      setLoading(true);
+      try {
+        const data = await api.get<{ playlists: ApiPlaylist[] }>('/api/playlists?limit=20');
+        if (data.playlists) {
+          setPlaylists(data.playlists.map(mapPlaylist));
+        }
+      } catch {
+        // silently fail
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlaylists();
+  }, []);
 
   const handlePlayPlaylist = (playlistId: string) => {
     console.log('Play playlist:', playlistId);
     setIsPlaying(!isPlaying);
   };
+
+  if (loading) {
+    return (
+      <LibraryContainer>
+        <LoadingWrap><Loader2 size={32} /></LoadingWrap>
+      </LibraryContainer>
+    );
+  }
 
   return (
     <LibraryContainer>
@@ -382,9 +388,11 @@ const Library = () => {
         ))}
       </FilterTabs>
 
-      {viewMode === 'grid' ? (
+      {playlists.length === 0 ? (
+        <EmptyState>No playlists yet. Create your first playlist!</EmptyState>
+      ) : viewMode === 'grid' ? (
         <GridView>
-          {mockPlaylists.map(playlist => (
+          {playlists.map(playlist => (
             <PlaylistCard key={playlist.id}>
               <PlaylistImage src={playlist.imageUrl} alt={playlist.name} />
               <PlaylistTitle>{playlist.name}</PlaylistTitle>
@@ -412,7 +420,7 @@ const Library = () => {
         </GridView>
       ) : (
         <ListView>
-          {mockPlaylists.map(playlist => (
+          {playlists.map(playlist => (
             <ListRow
               key={playlist.id}
               onClick={() => handlePlayPlaylist(playlist.id)}
