@@ -49,13 +49,6 @@ const SearchIconWrapper = styled.div`
   color: #969696;
 `;
 
-const SearchResults = styled.div`
-  display: none;
-
-  &.visible {
-    display: block;
-  }
-`;
 
 const CategoryGrid = styled.div`
   display: grid;
