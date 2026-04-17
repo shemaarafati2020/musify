@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  user
+  guest
+}
+
+enum UserStatus {
+  active
+  suspended
+  inactive
+}
+
+model User {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  username      String       @unique
+  password      String
+  role          UserRole     @default(user)
+  status        UserStatus   @default(active)
+  avatar        String?
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  lastLogin     DateTime?    @map("last_login")
+
+  // Preferences
+  theme            String   @default("dark")
+  language         String   @default("en")
+  explicitContent  Boolean  @default(false) @map("explicit_content")
+  autoplay         Boolean  @default(false)
+  volume           Float    @default(0.5)
+
+  // Relations
+  playlists        Playlist[]
+  likedTracks      LikedTrack[]
+  refreshTokens    RefreshToken[]
+  playHistory      PlayHistory[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("refresh_tokens")
+}
+
+model Artist {
+  id        String   @id @default(uuid())
+  name      String
+  imageUrl  String?  @map("image_url")
+  bio       String?
+  followers Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  albums    Album[]
+  tracks    Track[]
+
+  @@map("artists")
+}
+
+model Album {
+  id          String   @id @default(uuid())
+  name        String
+  artistId    String   @map("artist_id")
+  artist      Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  imageUrl    String?  @map("image_url")
+  releaseDate String?  @map("release_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tracks      Track[]
+
+  @@map("albums")
+}
+
+model Track {
+  id         String   @id @default(uuid())
+  name       String
+  artistId   String   @map("artist_id")
+  artist     Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  albumId    String?  @map("album_id")
+  album      Album?   @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  duration   Int      @default(0)
+  imageUrl   String?  @map("image_url")
+  audioUrl   String?  @map("audio_url")
+  previewUrl String?  @map("preview_url")
+  plays      Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  playlistTracks PlaylistTrack[]
+  likedBy        LikedTrack[]
+  playHistory    PlayHistory[]
+
+  @@map("tracks")
+}
+
+model Playlist {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?  @map("image_url")
+  isPublic    Boolean  @default(true) @map("is_public")
+  ownerId     String   @map("owner_id")
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tracks      PlaylistTrack[]
+
+  @@map("playlists")
+}
+
+model PlaylistTrack {
+  id         String   @id @default(uuid())
+  playlistId String   @map("playlist_id")
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  trackId    String   @map("track_id")
+  track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  position   Int      @default(0)
+  addedAt    DateTime @default(now()) @map("added_at")
+
+  @@unique([playlistId, trackId])
+  @@map("playlist_tracks")
+}
+
+model LikedTrack {
+  id      String   @id @default(uuid())
+  userId  String   @map("user_id")
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId String   @map("track_id")
+  track   Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  likedAt DateTime @default(now()) @map("liked_at")
+
+  @@unique([userId, trackId])
+  @@map("liked_tracks")
+}
+
+model PlayHistory {
+  id       String   @id @default(uuid())
+  userId   String   @map("user_id")
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId  String   @map("track_id")
+  track    Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  playedAt DateTime @default(now()) @map("played_at")
+
+  @@map("play_history")
+}

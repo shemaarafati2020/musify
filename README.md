@@ -1,6 +1,6 @@
 # Musify - Modern Music Player 🎵
 
-A Spotify-inspired music player built with React, TypeScript, and modern web technologies.
+A Spotify-inspired music streaming platform with a React frontend and Node.js/Express backend.
 
 ## Features
 
@@ -9,11 +9,13 @@ A Spotify-inspired music player built with React, TypeScript, and modern web tec
 - 🔍 **Real-Time Search**: Instant search for tracks, artists, albums
 - 📚 **Library Management**: Create, edit, and organize playlists
 - 📱 **Responsive Design**: Works seamlessly on all devices
-- ⚡ **Modern Stack**: React 19, TypeScript, Vite, Styled-Components
+- 🔐 **Authentication**: JWT-based auth with role-based access control
+- 🗄️ **PostgreSQL Database**: Full relational data model with Prisma ORM
+- ⚡ **Modern Stack**: React 19, TypeScript, Vite, Express, PostgreSQL, Redis
 
 ## Tech Stack
 
-### Frontend
+### Frontend (`frontend/`)
 - **React 19** - UI framework
 - **TypeScript** - Type safety
 - **Vite** - Build tool
@@ -21,19 +23,23 @@ A Spotify-inspired music player built with React, TypeScript, and modern web tec
 - **Zustand** - State management
 - **React Router** - Routing
 - **Lucide React** - Icons
-
-### Development Tools
-- **ESLint** - Linting
-- **Prettier** - Code formatting
-- **Husky** - Git hooks
 - **Vitest** - Unit testing
 - **Playwright** - E2E testing
-- **TypeScript** - Static typing
+
+### Backend (`backend/`)
+- **Node.js + Express** - REST API server
+- **PostgreSQL** - Relational database
+- **Prisma ORM** - Database toolkit with migrations
+- **Redis** - Caching layer
+- **JWT** - Authentication with refresh token rotation
+- **bcryptjs** - Password hashing
+- **Winston** - Structured logging
+- **Jest + Supertest** - API testing (48 tests)
 
 ### DevOps & Deployment
 - **Docker** - Containerization
 - **Kubernetes** - Orchestration
-- **GitHub Actions** - CI/CD
+- **GitHub Actions** - CI/CD (frontend + backend pipelines)
 - **Nginx** - Web server
 - **Let's Encrypt** - SSL certificates
 
@@ -49,22 +55,28 @@ A Spotify-inspired music player built with React, TypeScript, and modern web tec
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/your-username/musify.git
+git clone https://github.com/shemaarafati2020/musify.git
 cd musify
 ```
 
-2. **Install dependencies**
+2. **Start the frontend**
 ```bash
+cd frontend
 npm install
-```
-
-3. **Start development server**
-```bash
 npm run dev
 ```
-
-4. **Open your browser**
 Navigate to `http://localhost:5173`
+
+3. **Start the backend**
+```bash
+cd backend
+npm install
+cp .env.example .env   # Edit with your DB credentials
+npx prisma migrate dev
+npx prisma db seed
+npm run dev
+```
+API available at `http://localhost:8000`
 
 ### Docker Development
 
@@ -75,69 +87,77 @@ docker-compose up -d
 
 2. **Access the application**
 - Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
 - Grafana: http://localhost:3001
 - MinIO: http://localhost:9001
 
 ## Available Scripts
 
+### Frontend (`cd frontend`)
 ```bash
-# Development
 npm run dev          # Start development server
-npm run preview      # Preview production build
-
-# Build & Deploy
 npm run build        # Build for production
 npm run type-check   # Run TypeScript type checking
-
-# Code Quality
 npm run lint         # Run ESLint
-npm run lint:fix     # Fix ESLint issues
 npm run format       # Format code with Prettier
-npm run format:check # Check code formatting
-
-# Testing
-npm run test         # Run tests in watch mode
 npm run test:unit    # Run unit tests
-npm run test:coverage # Run tests with coverage
 npm run test:e2e     # Run E2E tests
-npm run test:e2e:ui  # Run E2E tests with UI
+```
+
+### Backend (`cd backend`)
+```bash
+npm run dev          # Start with nodemon hot-reload
+npm start            # Start production server
+npm test             # Run all API tests (48 tests)
+npm run db:migrate   # Run Prisma migrations
+npm run db:seed      # Seed database with sample data
+npm run db:studio    # Open Prisma Studio GUI
 ```
 
 ## Project Structure
 
 ```
 musify/
-├── src/
-│   ├── components/     # Reusable UI components
-│   │   ├── Sidebar.tsx
-│   │   └── PlaybackBar.tsx
-│   ├── pages/         # Page components
-│   │   ├── Home.tsx
-│   │   ├── Search.tsx
-│   │   └── Library.tsx
-│   ├── store/         # State management
-│   │   └── playbackStore.ts
-│   ├── types/         # TypeScript definitions
-│   │   └── index.ts
-│   └── test/          # Test setup
-├── k8s/               # Kubernetes manifests
-├── .github/workflows/ # GitHub Actions
-├── e2e/               # E2E tests
-└── monitoring/        # Monitoring configs
+├── frontend/              # React frontend application
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/         # Page components
+│   │   ├── store/         # Zustand state management
+│   │   ├── types/         # TypeScript definitions
+│   │   ├── contexts/      # React contexts
+│   │   ├── hooks/         # Custom hooks
+│   │   └── services/      # Frontend services
+│   ├── e2e/               # Playwright E2E tests
+│   ├── public/            # Static assets
+│   └── package.json
+├── backend/               # Node.js/Express API
+│   ├── src/
+│   │   ├── config/        # App, DB, Redis, logger config
+│   │   ├── controllers/   # Route handlers
+│   │   ├── middleware/     # Auth, validation, error handling
+│   │   ├── routes/        # Express route definitions
+│   │   ├── services/      # Business logic
+│   │   └── __tests__/     # Jest API tests
+│   ├── prisma/            # Schema, migrations, seed
+│   └── package.json
+├── k8s/                   # Kubernetes manifests
+├── .github/workflows/     # CI/CD pipelines
+├── docker-compose.yml     # Full stack dev environment
+└── README.md
 ```
 
 ## Deployment
 
 ### Docker
 
-1. **Build the image**
+1. **Build the frontend image**
 ```bash
-docker build -t musify .
+docker build -t musify-frontend ./frontend
 ```
 
 2. **Run the container**
 ```bash
-docker run -p 3000:3000 musify
+docker run -p 3000:3000 musify-frontend
 ```
 
 ### Kubernetes
@@ -163,12 +183,21 @@ The CI/CD pipeline automatically:
 
 ## Environment Variables
 
-Create a `.env.local` file:
-
+### Frontend (`frontend/.env.local`)
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_SPOTIFY_CLIENT_ID=your_spotify_client_id
 ```
+
+### Backend (`backend/.env`)
+```env
+DATABASE_URL=postgresql://musify:password@localhost:5432/musify
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=your-secret-key
+JWT_REFRESH_SECRET=your-refresh-secret
+CORS_ORIGIN=http://localhost:3000
+PORT=8000
+```
+See `backend/.env.example` for all options.
 
 ## Contributing
 
